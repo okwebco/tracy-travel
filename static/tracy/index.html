@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Tracy Travel 🕵️</title>
+<!-- Travelpayouts: verificación del sitio + atribución de afiliado (marker 734957, trs 535240) -->
+<script data-cfasync="false">
+  (function () {
+    var s = document.createElement("script");
+    s.async = 1;
+    s.src = "https://emrldtp.com/NTM1MjQw.js?t=535240";
+    document.head.appendChild(s);
+  })();
+</script>
+<style>
+:root{color-scheme:dark}
+*{box-sizing:border-box}
+body{font-family:system-ui,-apple-system,sans-serif;background:#0f172a;color:#e2e8f0;margin:0;padding:0}
+.wrap{max-width:520px;margin:0 auto;padding:24px}
+header{text-align:center;padding:28px 0 10px}
+.logo{font-size:48px}
+h1{font-size:26px;margin:6px 0}
+.sub{color:#94a3b8;font-size:14px}
+.card{background:#1e293b;border-radius:14px;padding:20px;margin:16px 0}
+label{display:block;font-size:13px;color:#cbd5e1;margin:12px 0 4px}
+input,select{width:100%;padding:10px;border-radius:8px;border:1px solid #334155;
+background:#0f172a;color:#e2e8f0;font-size:15px}
+.row{display:flex;gap:10px}
+.row>div{flex:1}
+button{width:100%;background:#38bdf8;color:#06283b;border:none;font-weight:700;
+border-radius:10px;padding:12px;font-size:16px;margin-top:18px;cursor:pointer}
+button:disabled{opacity:.6;cursor:not-allowed}
+.btn-alt{background:#334155;color:#e2e8f0}
+.hide{display:none}
+.aviso{background:#0f172a;border-left:4px solid #f59e0b;padding:12px;border-radius:8px;margin:12px 0;font-size:14px}
+.aviso.ok{border-color:#22c55e}
+.err{color:#f87171;font-size:13px;margin-top:8px}
+.ok-msg{color:#4ade80;font-size:14px}
+a.wa{display:block;text-align:center;background:#25d366;color:#06281a;font-weight:700;
+text-decoration:none;border-radius:10px;padding:12px;margin-top:14px}
+footer{text-align:center;color:#64748b;font-size:12px;margin:24px 0}
+.legal{font-size:11px;color:#64748b;margin-top:10px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">🕵️</div>
+    <h1>Tracy Travel</h1>
+    <div class="sub">Investiga tu viaje: rastreamos vuelos y hospedaje y te avisamos por WhatsApp.</div>
+  </header>
+
+  <!-- Paso 1: clave -->
+  <div class="card" id="paso-clave">
+    <label>Clave de acceso</label>
+    <input type="password" id="clave" placeholder="Ingresa la clave">
+    <button onclick="entrar()">Entrar</button>
+    <div class="err" id="err-clave"></div>
+  </div>
+
+  <!-- Paso 2: formulario -->
+  <div class="card hide" id="paso-form">
+    <label>Tu WhatsApp (con código de país)</label>
+    <input id="whatsapp" inputmode="numeric" placeholder="573001112233">
+
+    <div class="row">
+      <div>
+        <label>Origen</label>
+        <select id="origen"></select>
+      </div>
+      <div>
+        <label>Destino</label>
+        <select id="destino"></select>
+      </div>
+    </div>
+
+    <label>¿Qué rastreamos?</label>
+    <select id="macro">
+      <option value="vuelo">✈️ Solo vuelo</option>
+      <option value="hospedaje">🏨 Solo hospedaje</option>
+      <option value="ambos">✈️+🏨 Vuelo y hospedaje</option>
+    </select>
+
+    <label>Motivo del viaje</label>
+    <select id="motivo">
+      <option value="turismo">Turismo</option>
+      <option value="negocios">Negocios</option>
+      <option value="familiar">Familiar</option>
+      <option value="otros">Otros</option>
+    </select>
+
+    <div class="row">
+      <div>
+        <label>Fecha salida</label>
+        <input type="date" id="fecha_salida">
+      </div>
+      <div>
+        <label>Fecha regreso</label>
+        <input type="date" id="fecha_regreso">
+      </div>
+    </div>
+    <label><input type="checkbox" id="flexible" style="width:auto"> Fechas flexibles</label>
+
+    <div class="row" id="bloque-hotel">
+      <div>
+        <label>Noches</label>
+        <input type="number" id="noches" min="1" placeholder="3">
+      </div>
+      <div>
+        <label>Hotel mín</label>
+        <input type="number" id="hotel_min" placeholder="0">
+      </div>
+      <div>
+        <label>Hotel máx</label>
+        <input type="number" id="hotel_max" placeholder="500000">
+      </div>
+    </div>
+
+    <label>Modo de rastreo</label>
+    <select id="modo" onchange="toggleModo()">
+      <option value="opcion1">Opción 1 — un solo día</option>
+      <option value="opcion2">Opción 2 — diaria varios días</option>
+    </select>
+
+    <div id="bloque-op1">
+      <label>Entregar a los… días</label>
+      <select id="opcion1_dia">
+        <option value="1">1</option><option value="3">3</option>
+        <option value="5">5</option><option value="8">8</option>
+        <option value="15">15</option><option value="30">30</option>
+      </select>
+    </div>
+    <div id="bloque-op2" class="hide">
+      <label>Durante… días (1 a 8)</label>
+      <input type="number" id="opcion2_dias" min="1" max="8" value="3">
+    </div>
+
+    <button class="btn-alt" onclick="precheck()">Revisar temporada</button>
+    <div id="aviso-temp" class="aviso hide"></div>
+
+    <button onclick="crear()" id="btn-crear">Activar rastreo</button>
+    <div class="err" id="err-form"></div>
+
+    <!-- Resultado: enlace de opt-in -->
+    <div id="resultado" class="hide">
+      <div class="aviso ok"><b>¡Casi listo!</b> Toca el botón y envía el mensaje a Tracy para activar tu rastreo.
+        Código: <b id="codigo"></b></div>
+      <a class="wa" id="wa-link" href="#" target="_blank">Activar por WhatsApp 💬</a>
+    </div>
+
+    <div class="legal">🔒 Nunca te pediremos dinero ni datos bancarios. Puedes responder CANCELAR en cualquier momento.</div>
+  </div>
+
+  <footer>Tracy Travel · MVP · Hecho con 🕵️</footer>
+</div>
+
+<script>
+const ORIGENES = {{ORIGENES}};
+const DESTINOS = {{DESTINOS}};
+
+function llenar(sel, data, ph){
+  const s = document.getElementById(sel);
+  s.innerHTML = '<option value="">'+ph+'</option>';
+  Object.keys(data).sort((a,b)=>data[a].localeCompare(data[b])).forEach(k=>{
+    const o = document.createElement('option');
+    o.value = k; o.textContent = data[k]+' ('+k+')';
+    s.appendChild(o);
+  });
+}
+llenar('origen', ORIGENES, 'Elige origen');
+llenar('destino', DESTINOS, 'Elige destino');
+
+let CLAVE = '';
+function entrar(){
+  CLAVE = document.getElementById('clave').value;
+  if(!CLAVE){ document.getElementById('err-clave').textContent='Ingresa la clave'; return; }
+  document.getElementById('paso-clave').classList.add('hide');
+  document.getElementById('paso-form').classList.remove('hide');
+}
+
+function toggleModo(){
+  const m = document.getElementById('modo').value;
+  document.getElementById('bloque-op1').classList.toggle('hide', m!=='opcion1');
+  document.getElementById('bloque-op2').classList.toggle('hide', m!=='opcion2');
+}
+
+async function precheck(){
+  const destino = document.getElementById('destino').value;
+  if(!destino){ alert('Elige un destino primero'); return; }
+  const body = {
+    destino,
+    fecha_salida: document.getElementById('fecha_salida').value || null,
+    fecha_regreso: document.getElementById('fecha_regreso').value || null
+  };
+  const r = await fetch('/api/tracy/precheck', {method:'POST',
+    headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+  const av = document.getElementById('aviso-temp');
+  if(!r.ok){ av.className='aviso'; av.textContent='No se pudo evaluar la temporada.'; av.classList.remove('hide'); return; }
+  const d = await r.json();
+  av.className = 'aviso' + (d.sube_precio ? '' : ' ok');
+  av.textContent = '📅 ' + d.mensaje;
+  av.classList.remove('hide');
+}
+
+function num(id){ const v=document.getElementById(id).value; return v===''?null:Number(v); }
+
+async function crear(){
+  const err = document.getElementById('err-form'); err.textContent='';
+  const modo = document.getElementById('modo').value;
+  const body = {
+    clave: CLAVE,
+    whatsapp: document.getElementById('whatsapp').value,
+    origen: document.getElementById('origen').value,
+    destino: document.getElementById('destino').value,
+    macro: document.getElementById('macro').value,
+    motivo: document.getElementById('motivo').value,
+    fecha_salida: document.getElementById('fecha_salida').value || null,
+    fecha_regreso: document.getElementById('fecha_regreso').value || null,
+    flexible: document.getElementById('flexible').checked,
+    noches: num('noches'),
+    hotel_precio_min: num('hotel_min'),
+    hotel_precio_max: num('hotel_max'),
+    moneda: 'COP',
+    modo,
+    opcion1_dia: modo==='opcion1' ? num('opcion1_dia') : null,
+    opcion2_dias: modo==='opcion2' ? num('opcion2_dias') : null
+  };
+  const r = await fetch('/api/tracy/consultas', {method:'POST',
+    headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+  if(!r.ok){
+    let msg='Error al crear la consulta';
+    try{ const e=await r.json(); msg = (typeof e.detail==='string')?e.detail:JSON.stringify(e.detail); }catch(_){}
+    err.textContent = msg; return;
+  }
+  const d = await r.json();
+  document.getElementById('codigo').textContent = d.codigo;
+  document.getElementById('wa-link').href = d.wa_link;
+  document.getElementById('resultado').classList.remove('hide');
+}
+</script>
+</body>
+</html>
