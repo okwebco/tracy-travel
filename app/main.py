@@ -64,12 +64,12 @@ async def health():
 
 
 def _landing_tracy() -> HTMLResponse:
-    """Sirve la landing de Tracy inyectando los catálogos de orígenes/destinos."""
+    """Sirve la landing de Tracy inyectando los catálogos agrupados por país."""
     from app.tracy import catalogo
     with open("static/tracy/index.html", encoding="utf-8") as f:
         html = f.read()
-    origenes = {k: v["ciudad"] for k, v in catalogo.ORIGENES.items()}
-    destinos = {k: v["ciudad"] for k, v in catalogo.DESTINOS.items()}
+    origenes = catalogo.origenes_por_pais()
+    destinos = catalogo.destinos_por_pais()
     html = html.replace("{{ORIGENES}}", json.dumps(origenes, ensure_ascii=False))
     html = html.replace("{{DESTINOS}}", json.dumps(destinos, ensure_ascii=False))
     return HTMLResponse(html, headers=_NO_CACHE)

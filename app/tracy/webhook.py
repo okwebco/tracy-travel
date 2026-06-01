@@ -2,7 +2,8 @@
 
 Configura la URL de este endpoint en el panel de Green API (ver notas de despliegue).
 """
-from datetime import date, timedelta
+from datetime import date
+import json
 import re
 
 from fastapi import APIRouter, Request
@@ -10,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.database import SessionLocal
 from app.tracy.models import Consulta
-from app.tracy import services
+from app.tracy import services, modos as modos_mod
 from app.services.whatsapp import send_whatsapp
 
 router = APIRouter(prefix="/api/webhook", tags=["tracy-webhook"])
@@ -38,17 +39,24 @@ def _extraer(payload: dict) -> tuple[str | None, str | None]:
 
 
 def _activar(db: Session, consulta: Consulta) -> None:
-    """Activa una consulta tras el opt-in: fija estado, próxima ejecución y totales."""
+    """Activa una consulta tras el opt-in: fija estado, checkpoints y totales.
+
+    La primera entrega es SIEMPRE inmediata (hoy) en los tres modos; el cron
+    `revisar` la procesa de inmediato (la llamamos justo después en el webhook).
+    """
+    hoy = date.today()
+    fechas = modos_mod.calcular_checkpoints(
+        consulta.modo,
+        desde=hoy,
+        rastreo_dias=consulta.rastreo_dias,
+        seguimiento_cantidad=consulta.seguimiento_cantidad,
+        seguimiento_frecuencia=consulta.seguimiento_frecuencia,
+    )
     consulta.estado = "activa"
     consulta.ejecuciones_hechas = 0
-    # La primera entrega es siempre en la madrugada del día siguiente.
-    consulta.proxima_ejecucion = date.today() + timedelta(days=1)
-    if consulta.modo == "opcion1":
-        consulta.ejecuciones_totales = 1
-        # Para opción 1 el checkpoint es a los N días de la activación.
-        consulta.proxima_ejecucion = date.today() + timedelta(days=consulta.opcion1_dia or 1)
-    else:
-        consulta.ejecuciones_totales = consulta.opcion2_dias or 1
+    consulta.ejecuciones_totales = len(fechas)
+    consulta.checkpoints = json.dumps([f.isoformat() for f in fechas])
+    consulta.proxima_ejecucion = fechas[0]  # hoy = entrega inmediata #1
 
 
 @router.post("/whatsapp")
@@ -93,6 +101,13 @@ async def webhook_whatsapp(request: Request):
             _activar(db, consulta)
             db.commit()
             await send_whatsapp(numero, services.mensaje_bienvenida(consulta))
+
+            # Resultado inmediato (#1) en los tres modos: busca, genera el
+            # reporte y lo envía YA. Luego siguen los checkpoints programados.
+            from app.tracy import cron
+            await cron.procesar_consulta(db, consulta)
+            await cron.notificar(db)
+
             return {"ok": True, "activada": consulta.id}
 
         return {"ok": True, "sin_coincidencia": True}

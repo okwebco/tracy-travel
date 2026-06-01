@@ -41,39 +41,76 @@ def _mejor_precio_previo(db: Session, consulta: Consulta) -> float | None:
     return min(precios) if precios else None
 
 
+def _siguiente_checkpoint(consulta: Consulta) -> date | None:
+    """Devuelve la fecha del próximo checkpoint pendiente según los hechos.
+
+    Lee la lista `checkpoints` (CSV ISO) y toma la entrada en el índice
+    `ejecuciones_hechas`. Si no hay lista (consulta antigua) cae al modelo
+    legado (+1 día). Devuelve None si ya no quedan checkpoints.
+    """
+    if consulta.checkpoints:
+        try:
+            fechas = [date.fromisoformat(x) for x in json.loads(consulta.checkpoints)]
+        except Exception:
+            fechas = []
+        idx = consulta.ejecuciones_hechas or 0
+        if idx < len(fechas):
+            return fechas[idx]
+        return None
+    return None
+
+
+async def _generar_reporte(db: Session, c: Consulta) -> None:
+    """Ejecuta el aggregator para una consulta y crea su Reporte (no envía)."""
+    vuelos, hoteles = [], []
+    if c.macro in ("vuelo", "ambos"):
+        vuelos = await aggregator.buscar_vuelos(c)
+    if c.macro in ("hospedaje", "ambos"):
+        hoteles = await aggregator.buscar_hoteles(c)
+
+    mejor_previo = _mejor_precio_previo(db, c)
+    payload = services.construir_payload(c, vuelos, hoteles, mejor_previo)
+
+    reporte = Reporte(
+        consulta_id=c.id,
+        numero=c.whatsapp,
+        payload_json=json.dumps(payload, ensure_ascii=False),
+        enviado=False,
+        expires_at=datetime.utcnow() + timedelta(hours=config.REPORTE_TTL_HORAS),
+    )
+    db.add(reporte)
+
+    c.ejecuciones_hechas = (c.ejecuciones_hechas or 0) + 1
+    if c.ejecuciones_hechas >= c.ejecuciones_totales:
+        c.estado = "finalizada"
+        c.proxima_ejecucion = None
+    else:
+        # Programar el siguiente checkpoint real (offsets no uniformes en rastreo).
+        siguiente = _siguiente_checkpoint(c)
+        c.proxima_ejecucion = siguiente or (date.today() + timedelta(days=1))
+
+
+async def procesar_consulta(db: Session, c: Consulta) -> None:
+    """Genera el reporte del checkpoint actual de UNA consulta y persiste.
+
+    Se usa en la entrega inmediata #1 tras el opt-in.
+    """
+    await _generar_reporte(db, c)
+    db.commit()
+
+
 async def revisar(db: Session) -> int:
     """Genera reportes para las consultas activas cuyo checkpoint cae hoy o antes."""
     hoy = date.today()
     consultas = db.query(Consulta).filter(
         Consulta.estado == "activa",
+        Consulta.proxima_ejecucion != None,  # noqa: E711
         Consulta.proxima_ejecucion <= hoy,
     ).all()
 
     generados = 0
     for c in consultas:
-        vuelos, hoteles = [], []
-        if c.macro in ("vuelo", "ambos"):
-            vuelos = await aggregator.buscar_vuelos(c)
-        if c.macro in ("hospedaje", "ambos"):
-            hoteles = await aggregator.buscar_hoteles(c)
-
-        mejor_previo = _mejor_precio_previo(db, c)
-        payload = services.construir_payload(c, vuelos, hoteles, mejor_previo)
-
-        reporte = Reporte(
-            consulta_id=c.id,
-            numero=c.whatsapp,
-            payload_json=json.dumps(payload, ensure_ascii=False),
-            enviado=False,
-            expires_at=datetime.utcnow() + timedelta(hours=config.REPORTE_TTL_HORAS),
-        )
-        db.add(reporte)
-
-        c.ejecuciones_hechas = (c.ejecuciones_hechas or 0) + 1
-        if c.ejecuciones_hechas >= c.ejecuciones_totales:
-            c.estado = "finalizada"
-        else:
-            c.proxima_ejecucion = hoy + timedelta(days=1)
+        await _generar_reporte(db, c)
         generados += 1
 
     db.commit()
@@ -81,11 +118,9 @@ async def revisar(db: Session) -> int:
 
 
 async def notificar(db: Session) -> int:
-    """Envía por WhatsApp los reportes de hoy no enviados; marca enviado=True."""
-    hoy_ini = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    """Envía por WhatsApp los reportes no enviados aún; marca enviado=True."""
     reportes = db.query(Reporte).filter(
         Reporte.enviado == False,  # noqa: E712
-        Reporte.created_at >= hoy_ini,
     ).all()
 
     enviados = 0

@@ -3,7 +3,7 @@ frase de recomendación (3-5 palabras), total estimado y mensaje de WhatsApp.
 """
 from datetime import datetime
 
-from app.tracy import catalogo, temporadas, config
+from app.tracy import catalogo, temporadas, config, modos as modos_mod
 
 
 def _fmt_precio(valor: float | None, moneda: str) -> str:
@@ -135,9 +135,11 @@ def mensaje_bienvenida(consulta) -> str:
     """Mensaje de activación tras el opt-in."""
     o = catalogo.nombre(consulta.origen)
     d = catalogo.nombre(consulta.destino)
+    resumen = modos_mod.resumen_entregas(consulta)
     return (
-        f"🕵️ ¡Hola! Soy Tracy Travel. Activé tu rastreo {o} → {d}.\n"
-        f"Te avisaré en la madrugada con los mejores precios.\n\n"
+        f"🕵️ ¡Hola! Soy Tracy Travel. Activé tu consulta {o} → {d}.\n"
+        f"{resumen}\n"
+        f"Te envío ya tu primer reporte. 👇\n\n"
         f"🔒 Nunca te pediremos dinero ni datos bancarios.\n"
         f"Responde CANCELAR cuando quieras para detener el rastreo."
     )

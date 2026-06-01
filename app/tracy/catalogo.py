@@ -147,3 +147,28 @@ def coords(iata: str) -> tuple[float, float] | None:
     if datos and datos.get("lat") is not None and datos.get("lon") is not None:
         return (datos["lat"], datos["lon"])
     return None
+
+
+def _agrupar_por_pais(tabla: dict) -> dict:
+    """Agrupa una tabla {IATA: {...}} por país → lista de aeropuertos.
+
+    Devuelve {pais: [{"iata": .., "ciudad": ..}, ...]} ordenado por país y
+    por ciudad dentro de cada país.
+    """
+    grupos: dict[str, list[dict]] = {}
+    for iata, datos in tabla.items():
+        grupos.setdefault(datos["pais"], []).append({"iata": iata, "ciudad": datos["ciudad"]})
+    for pais_nombre in grupos:
+        grupos[pais_nombre].sort(key=lambda x: x["ciudad"])
+    # Reordenar el dict por nombre de país
+    return {p: grupos[p] for p in sorted(grupos)}
+
+
+def origenes_por_pais() -> dict:
+    """Orígenes (Colombia) agrupados por país → aeropuertos. Paso 1 del selector."""
+    return _agrupar_por_pais(ORIGENES)
+
+
+def destinos_por_pais() -> dict:
+    """Destinos agrupados por país → aeropuertos. Paso 1 del selector dependiente."""
+    return _agrupar_por_pais(DESTINOS)

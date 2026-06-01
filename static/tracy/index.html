@@ -2,10 +2,11 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <meta name="robots" content="noindex">
 <title>Tracy Travel 🕵️</title>
-<!-- Travelpayouts: verificación del sitio + atribución de afiliado (marker 734957, trs 535240) -->
+<!-- Travelpayouts: verificación del sitio + atribución de afiliado (marker 734957) -->
+<script data-cfasync="false" async src="https://tp.media/content?currency=cop&trs=535240&shmarker=734957&type=init"></script>
 <script data-cfasync="false">
   (function () {
     var s = document.createElement("script");
@@ -17,67 +18,120 @@
 <style>
 :root{color-scheme:dark}
 *{box-sizing:border-box}
-body{font-family:system-ui,-apple-system,sans-serif;background:#0f172a;color:#e2e8f0;margin:0;padding:0}
-.wrap{max-width:520px;margin:0 auto;padding:24px}
-header{text-align:center;padding:28px 0 10px}
-.logo{font-size:48px}
-h1{font-size:26px;margin:6px 0}
-.sub{color:#94a3b8;font-size:14px}
-.card{background:#1e293b;border-radius:14px;padding:20px;margin:16px 0}
-label{display:block;font-size:13px;color:#cbd5e1;margin:12px 0 4px}
-input,select{width:100%;padding:10px;border-radius:8px;border:1px solid #334155;
-background:#0f172a;color:#e2e8f0;font-size:15px}
+body{font-family:system-ui,-apple-system,sans-serif;background:#0f172a;color:#e2e8f0;margin:0;padding:0;-webkit-text-size-adjust:100%}
+.wrap{max-width:520px;margin:0 auto;padding:18px 16px 8px}
+header{text-align:center;padding:22px 0 6px}
+.logo{font-size:46px}
+/* F1: título grande y en negrita */
+h1{font-size:30px;font-weight:800;margin:8px 0 4px;letter-spacing:-.5px}
+.sub{color:#94a3b8;font-size:14px;line-height:1.55;margin:6px auto 0;max-width:440px}
+.card{background:#1e293b;border-radius:14px;padding:18px;margin:14px 0}
+label{display:block;font-size:13px;color:#cbd5e1;margin:14px 0 5px;font-weight:600}
+label:first-child{margin-top:0}
+input,select{width:100%;padding:12px;border-radius:10px;border:1px solid #334155;
+background:#0f172a;color:#e2e8f0;font-size:16px;appearance:none}
+input:focus,select:focus{outline:none;border-color:#38bdf8}
+input.bad,select.bad{border-color:#f87171}
 .row{display:flex;gap:10px}
 .row>div{flex:1}
 button{width:100%;background:#38bdf8;color:#06283b;border:none;font-weight:700;
-border-radius:10px;padding:12px;font-size:16px;margin-top:18px;cursor:pointer}
-button:disabled{opacity:.6;cursor:not-allowed}
+border-radius:12px;padding:14px;font-size:16px;margin-top:18px;cursor:pointer;transition:opacity .15s}
+button:disabled{opacity:.55;cursor:not-allowed}
 .btn-alt{background:#334155;color:#e2e8f0}
 .hide{display:none}
-.aviso{background:#0f172a;border-left:4px solid #f59e0b;padding:12px;border-radius:8px;margin:12px 0;font-size:14px}
+.aviso{background:#0f172a;border-left:4px solid #f59e0b;padding:12px;border-radius:8px;margin:12px 0;font-size:14px;line-height:1.5}
 .aviso.ok{border-color:#22c55e}
-.err{color:#f87171;font-size:13px;margin-top:8px}
+.err{color:#f87171;font-size:13px;margin-top:6px}
+.field-err{color:#f87171;font-size:12px;margin-top:4px;min-height:0}
 .ok-msg{color:#4ade80;font-size:14px}
 a.wa{display:block;text-align:center;background:#25d366;color:#06281a;font-weight:700;
-text-decoration:none;border-radius:10px;padding:12px;margin-top:14px}
-footer{text-align:center;color:#64748b;font-size:12px;margin:24px 0}
-.legal{font-size:11px;color:#64748b;margin-top:10px;line-height:1.5}
+text-decoration:none;border-radius:12px;padding:14px;margin-top:14px;font-size:16px}
+footer{text-align:center;color:#64748b;font-size:12px;margin:18px 0 26px;line-height:1.7}
+footer a{color:#94a3b8;text-decoration:none}
+.legal{font-size:11px;color:#64748b;margin-top:14px;line-height:1.55}
+/* input con prefijo $ */
+.money{position:relative}
+.money>span{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:16px;pointer-events:none}
+.money>input{padding-left:26px}
+/* quitar flechas (spinners) de inputs numéricos */
+input[type=number]{-moz-appearance:textfield}
+input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+/* clave con ojo */
+.pwd{position:relative}
+.pwd>input{padding-right:48px}
+.eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;
+width:auto;margin:0;padding:8px;font-size:18px;cursor:pointer;color:#94a3b8}
+/* modos: tarjetas seleccionables */
+.modos{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+.modo-opt{border:1px solid #334155;border-radius:10px;padding:12px;cursor:pointer;background:#0f172a}
+.modo-opt.sel{border-color:#38bdf8;background:#0b2536}
+.modo-opt b{display:block;font-size:15px}
+.modo-opt small{color:#94a3b8;font-size:12px;display:block;margin-top:2px}
+/* casillas de rastreo */
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.chip{border:1px solid #334155;border-radius:999px;padding:8px 16px;cursor:pointer;font-size:15px;background:#0f172a}
+.chip.on{background:#38bdf8;color:#06283b;border-color:#38bdf8;font-weight:700}
+.resumen{background:#0b2536;border:1px solid #155e75;border-radius:10px;padding:12px;margin-top:12px;font-size:14px;line-height:1.5}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid #06283b;border-top-color:transparent;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px;margin-right:6px}
+@keyframes sp{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
     <div class="logo">🕵️</div>
-    <h1>Tracy Travel</h1>
-    <div class="sub">Investiga tu viaje: rastreamos vuelos y hospedaje y te avisamos por WhatsApp.</div>
+    <!-- F1 -->
+    <h1>Investiga tu viaje</h1>
+    <!-- F2 -->
+    <div class="sub">Tracy Travel investiga y rastrea precios de vuelos y hospedaje. Desde una página
+      pública eliges origen, destino, fechas y modo de seguimiento; Tracy Travel confirma la suscripción
+      por WhatsApp (opt-in), revisa precios cada día y envía un reporte con las mejores ofertas, enlazando
+      a una página de reporte que se autodestruye a las 48 horas.</div>
   </header>
 
   <!-- Paso 1: clave -->
   <div class="card" id="paso-clave">
-    <label>Clave de acceso</label>
-    <input type="password" id="clave" placeholder="Ingresa la clave">
-    <button onclick="entrar()">Entrar</button>
-    <div class="err" id="err-clave"></div>
+    <label for="clave">Clave de acceso</label>
+    <div class="pwd">
+      <input type="password" id="clave" placeholder="Ingresa la clave" autocomplete="off">
+      <button type="button" class="eye" id="ojo" onclick="toggleClave()" aria-label="Mostrar/ocultar clave">👁️</button>
+    </div>
+    <div class="field-err err" id="err-clave"></div>
+    <button id="btn-entrar" onclick="entrar()">Entrar</button>
   </div>
 
   <!-- Paso 2: formulario -->
   <div class="card hide" id="paso-form">
-    <label>Tu WhatsApp (con código de país)</label>
-    <input id="whatsapp" inputmode="numeric" placeholder="573001112233">
+    <label for="whatsapp">Tu WhatsApp (con código de país)</label>
+    <input id="whatsapp" inputmode="numeric" placeholder="573001112233" autocomplete="off">
+    <div class="field-err" id="fe-whatsapp"></div>
 
+    <!-- Origen: país → aeropuerto (dependiente) -->
+    <label>Origen</label>
     <div class="row">
       <div>
-        <label>Origen</label>
-        <select id="origen"></select>
+        <select id="origen_pais" onchange="poblarAeropuertos('origen')"></select>
       </div>
       <div>
-        <label>Destino</label>
-        <select id="destino"></select>
+        <select id="origen" disabled></select>
       </div>
     </div>
+    <div class="field-err" id="fe-origen"></div>
+
+    <!-- Destino: país → aeropuerto (dependiente) -->
+    <label>Destino</label>
+    <div class="row">
+      <div>
+        <select id="destino_pais" onchange="poblarAeropuertos('destino')"></select>
+      </div>
+      <div>
+        <select id="destino" disabled></select>
+      </div>
+    </div>
+    <div class="field-err" id="fe-destino"></div>
 
     <label>¿Qué rastreamos?</label>
-    <select id="macro">
+    <select id="macro" onchange="toggleHotel()">
       <option value="vuelo">✈️ Solo vuelo</option>
       <option value="hospedaje">🏨 Solo hospedaje</option>
       <option value="ambos">✈️+🏨 Vuelo y hospedaje</option>
@@ -91,124 +145,305 @@ footer{text-align:center;color:#64748b;font-size:12px;margin:24px 0}
       <option value="otros">Otros</option>
     </select>
 
+    <label>Moneda</label>
+    <select id="moneda">
+      <option value="COP">COP — Peso colombiano</option>
+      <option value="USD">USD — Dólar</option>
+      <option value="EUR">EUR — Euro</option>
+    </select>
+
     <div class="row">
       <div>
-        <label>Fecha salida</label>
+        <label for="fecha_salida">Fecha salida</label>
         <input type="date" id="fecha_salida">
       </div>
       <div>
-        <label>Fecha regreso</label>
+        <label for="fecha_regreso">Fecha regreso</label>
         <input type="date" id="fecha_regreso">
       </div>
     </div>
-    <label><input type="checkbox" id="flexible" style="width:auto"> Fechas flexibles</label>
+    <label style="font-weight:400"><input type="checkbox" id="flexible" style="width:auto"> Fechas flexibles</label>
 
-    <div class="row" id="bloque-hotel">
-      <div>
-        <label>Noches</label>
-        <input type="number" id="noches" min="1" placeholder="3">
-      </div>
-      <div>
-        <label>Hotel mín</label>
-        <input type="number" id="hotel_min" placeholder="0">
-      </div>
-      <div>
-        <label>Hotel máx</label>
-        <input type="number" id="hotel_max" placeholder="500000">
-      </div>
-    </div>
-
-    <label>Modo de rastreo</label>
-    <select id="modo" onchange="toggleModo()">
-      <option value="opcion1">Opción 1 — un solo día</option>
-      <option value="opcion2">Opción 2 — diaria varios días</option>
-    </select>
-
-    <div id="bloque-op1">
-      <label>Entregar a los… días</label>
-      <select id="opcion1_dia">
-        <option value="1">1</option><option value="3">3</option>
-        <option value="5">5</option><option value="8">8</option>
-        <option value="15">15</option><option value="30">30</option>
-      </select>
-    </div>
-    <div id="bloque-op2" class="hide">
-      <label>Durante… días (1 a 8)</label>
-      <input type="number" id="opcion2_dias" min="1" max="8" value="3">
-    </div>
-
-    <button class="btn-alt" onclick="precheck()">Revisar temporada</button>
+    <!-- Revisar temporada: inmediatamente después de las fechas -->
+    <button class="btn-alt" onclick="precheck()">📅 Revisar temporada</button>
     <div id="aviso-temp" class="aviso hide"></div>
 
-    <button onclick="crear()" id="btn-crear">Activar rastreo</button>
-    <div class="err" id="err-form"></div>
+    <!-- Hospedaje -->
+    <div id="bloque-hotel" class="hide">
+      <label for="noches">Noches</label>
+      <input type="number" id="noches" min="1" placeholder="3">
+      <div class="field-err" id="fe-noches"></div>
+      <div class="row">
+        <div>
+          <label>Hospedaje <span id="lbl-moneda-min">$</span>mínimo</label>
+          <div class="money"><span>$</span><input type="number" id="hotel_min" placeholder="0"></div>
+        </div>
+        <div>
+          <label>Hospedaje <span id="lbl-moneda-max">$</span>máximo</label>
+          <div class="money"><span>$</span><input type="number" id="hotel_max" placeholder="500000"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modo de consulta -->
+    <label>Modo de consulta</label>
+    <div class="modos">
+      <div class="modo-opt" data-modo="rapida" onclick="setModo('rapida')">
+        <b>⚡ Consulta rápida</b><small>Una búsqueda inmediata, una sola vez.</small>
+      </div>
+      <div class="modo-opt" data-modo="rastreo" onclick="setModo('rastreo')">
+        <b>🔎 Rastreo</b><small>Informes en los días que elijas (1, 3, 5, 8, 15, 30).</small>
+      </div>
+      <div class="modo-opt" data-modo="seguimiento" onclick="setModo('seguimiento')">
+        <b>📡 Seguimiento</b><small>Varios informes con la frecuencia que prefieras.</small>
+      </div>
+    </div>
+
+    <!-- Rastreo -->
+    <div id="bloque-rastreo" class="hide">
+      <label>Días de rastreo (se acumulan)</label>
+      <div class="chips" id="chips-rastreo"></div>
+    </div>
+
+    <!-- Seguimiento -->
+    <div id="bloque-seguimiento" class="hide">
+      <div class="row">
+        <div>
+          <label>Cantidad de rastreos</label>
+          <select id="seg_cantidad" onchange="actualizarResumen()">
+            <option value="2">2</option><option value="3">3</option>
+            <option value="4">4</option><option value="5">5</option><option value="6">6</option>
+          </select>
+        </div>
+        <div>
+          <label>Cada… días</label>
+          <select id="seg_frecuencia" onchange="actualizarResumen()">
+            <option value="2">2</option><option value="3">3</option><option value="5">5</option>
+            <option value="7">7</option><option value="15">15</option><option value="30">30</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resumen dinámico de entregas -->
+    <div id="resumen-entregas" class="resumen hide"></div>
+
+    <button onclick="revisarYConfirmar()" id="btn-crear">Revisar resumen</button>
+    <div class="field-err err" id="err-form"></div>
+
+    <!-- Resumen antes de confirmar -->
+    <div id="confirmar" class="hide">
+      <div class="resumen" id="resumen-final"></div>
+      <button onclick="crear()" id="btn-confirmar">✅ Confirmar y activar</button>
+      <button class="btn-alt" onclick="editar()">✏️ Editar</button>
+    </div>
 
     <!-- Resultado: enlace de opt-in -->
     <div id="resultado" class="hide">
-      <div class="aviso ok"><b>¡Casi listo!</b> Toca el botón y envía el mensaje a Tracy para activar tu rastreo.
+      <div class="aviso ok"><b>¡Casi listo!</b> Toca el botón y envía el mensaje a Tracy para activar tu consulta.
         Código: <b id="codigo"></b></div>
       <a class="wa" id="wa-link" href="#" target="_blank">Activar por WhatsApp 💬</a>
+      <div class="ok-msg" style="margin-top:10px">✅ En cuanto confirmes, Tracy te envía tu primer reporte por WhatsApp.</div>
     </div>
 
     <div class="legal">🔒 Nunca te pediremos dinero ni datos bancarios. Puedes responder CANCELAR en cualquier momento.</div>
   </div>
 
-  <footer>Tracy Travel · MVP · Hecho con 🕵️</footer>
+  <footer>
+    <a href="http://okweb.co/jhoveloro/tracy-travel" target="_blank" rel="noopener">Tracy Travel | Crea Ok Web ® | 2026</a>
+  </footer>
 </div>
 
 <script>
-const ORIGENES = {{ORIGENES}};
-const DESTINOS = {{DESTINOS}};
+const CAT = {origenes: {{ORIGENES}}, destinos: {{DESTINOS}}};
+const RASTREO_DIAS = [1,3,5,8,15,30];
+let CLAVE = '';
+let MODO = '';
+let rastreoSel = [];   // días marcados
 
-function llenar(sel, data, ph){
-  const s = document.getElementById(sel);
+/* ---- Acceso ---- */
+function toggleClave(){
+  const i = document.getElementById('clave');
+  i.type = i.type === 'password' ? 'text' : 'password';
+}
+document.getElementById('clave').addEventListener('keydown', e => { if(e.key==='Enter') entrar(); });
+
+async function entrar(){
+  const clave = document.getElementById('clave').value;
+  const err = document.getElementById('err-clave'); err.textContent='';
+  const btn = document.getElementById('btn-entrar');
+  if(!clave){ err.textContent='Ingresa la clave.'; return; }
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span>Verificando…';
+  try{
+    const r = await fetch('/api/tracy/acceso', {method:'POST',
+      headers:{'Content-Type':'application/json'}, body:JSON.stringify({clave})});
+    if(!r.ok){
+      err.textContent = 'Clave incorrecta. Inténtalo de nuevo.';
+      document.getElementById('clave').classList.add('bad');
+      return;
+    }
+    CLAVE = clave;
+    document.getElementById('paso-clave').classList.add('hide');
+    document.getElementById('paso-form').classList.remove('hide');
+  }catch(_){
+    err.textContent = 'No se pudo verificar. Revisa tu conexión.';
+  }finally{
+    btn.disabled = false; btn.textContent = 'Entrar';
+  }
+}
+
+/* ---- Selectores país → aeropuerto ---- */
+function llenarPaises(selId, grupos, ph){
+  const s = document.getElementById(selId);
   s.innerHTML = '<option value="">'+ph+'</option>';
-  Object.keys(data).sort((a,b)=>data[a].localeCompare(data[b])).forEach(k=>{
-    const o = document.createElement('option');
-    o.value = k; o.textContent = data[k]+' ('+k+')';
-    s.appendChild(o);
+  Object.keys(grupos).forEach(p=>{
+    const o = document.createElement('option'); o.value=p; o.textContent=p; s.appendChild(o);
   });
 }
-llenar('origen', ORIGENES, 'Elige origen');
-llenar('destino', DESTINOS, 'Elige destino');
-
-let CLAVE = '';
-function entrar(){
-  CLAVE = document.getElementById('clave').value;
-  if(!CLAVE){ document.getElementById('err-clave').textContent='Ingresa la clave'; return; }
-  document.getElementById('paso-clave').classList.add('hide');
-  document.getElementById('paso-form').classList.remove('hide');
+function poblarAeropuertos(tipo){
+  const pais = document.getElementById(tipo+'_pais').value;
+  const sel = document.getElementById(tipo);
+  const grupos = tipo==='origen' ? CAT.origenes : CAT.destinos;
+  sel.innerHTML = '';
+  if(!pais){ sel.disabled = true; sel.innerHTML='<option value="">Elige país primero</option>'; return; }
+  const aps = grupos[pais] || [];
+  sel.disabled = false;
+  sel.innerHTML = '<option value="">Elige aeropuerto</option>';
+  aps.forEach(a=>{ const o=document.createElement('option'); o.value=a.iata; o.textContent=a.ciudad+' ('+a.iata+')'; sel.appendChild(o); });
+  if(aps.length===1){ sel.value = aps[0].iata; }
+}
+llenarPaises('origen_pais', CAT.origenes, 'País de origen');
+llenarPaises('destino_pais', CAT.destinos, 'País de destino');
+// Origen suele ser Colombia: preseleccionar si es único
+if(Object.keys(CAT.origenes).length===1){
+  const p = Object.keys(CAT.origenes)[0];
+  document.getElementById('origen_pais').value = p; poblarAeropuertos('origen');
 }
 
-function toggleModo(){
-  const m = document.getElementById('modo').value;
-  document.getElementById('bloque-op1').classList.toggle('hide', m!=='opcion1');
-  document.getElementById('bloque-op2').classList.toggle('hide', m!=='opcion2');
+/* ---- Hospedaje y moneda ---- */
+function toggleHotel(){
+  const m = document.getElementById('macro').value;
+  document.getElementById('bloque-hotel').classList.toggle('hide', m==='vuelo');
+}
+document.getElementById('moneda').addEventListener('change', ()=>{
+  // (el signo $ es genérico; mantenemos $ para todas las monedas por simplicidad)
+});
+
+/* ---- Modos ---- */
+function setModo(m){
+  MODO = m;
+  document.querySelectorAll('.modo-opt').forEach(el=>el.classList.toggle('sel', el.dataset.modo===m));
+  document.getElementById('bloque-rastreo').classList.toggle('hide', m!=='rastreo');
+  document.getElementById('bloque-seguimiento').classList.toggle('hide', m!=='seguimiento');
+  actualizarResumen();
+}
+// chips de rastreo
+const chipsBox = document.getElementById('chips-rastreo');
+RASTREO_DIAS.forEach(d=>{
+  const c = document.createElement('div'); c.className='chip'; c.textContent='Día '+d; c.dataset.dia=d;
+  c.onclick = ()=>marcarRastreo(d); chipsBox.appendChild(c);
+});
+function marcarRastreo(d){
+  // acumulativo: marcar todos los <= d
+  rastreoSel = RASTREO_DIAS.filter(x=>x<=d);
+  document.querySelectorAll('#chips-rastreo .chip').forEach(c=>{
+    c.classList.toggle('on', rastreoSel.includes(Number(c.dataset.dia)));
+  });
+  actualizarResumen();
+}
+function actualizarResumen(){
+  const box = document.getElementById('resumen-entregas');
+  let txt = '';
+  if(MODO==='rapida'){ txt='📨 Recibirás 1 reporte ahora (entrega inmediata).'; }
+  else if(MODO==='rastreo'){
+    if(!rastreoSel.length){ box.classList.add('hide'); return; }
+    const partes = rastreoSel.map(d=> d===1 ? 'ahora' : 'al día '+d);
+    txt = '📨 Recibirás: ' + partes.join(', ') + '.';
+  }else if(MODO==='seguimiento'){
+    const cant = Number(document.getElementById('seg_cantidad').value);
+    const frec = Number(document.getElementById('seg_frecuencia').value);
+    const hitos = ['ahora'];
+    for(let i=1;i<cant;i++) hitos.push('+'+(frec*i)+' días');
+    txt = '📨 Recibirás '+cant+' reportes: ' + hitos.join(', ') + '.';
+  }else{ box.classList.add('hide'); return; }
+  box.textContent = txt; box.classList.remove('hide');
 }
 
+/* ---- Precheck temporada ---- */
 async function precheck(){
   const destino = document.getElementById('destino').value;
-  if(!destino){ alert('Elige un destino primero'); return; }
-  const body = {
-    destino,
-    fecha_salida: document.getElementById('fecha_salida').value || null,
-    fecha_regreso: document.getElementById('fecha_regreso').value || null
-  };
-  const r = await fetch('/api/tracy/precheck', {method:'POST',
-    headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
   const av = document.getElementById('aviso-temp');
-  if(!r.ok){ av.className='aviso'; av.textContent='No se pudo evaluar la temporada.'; av.classList.remove('hide'); return; }
-  const d = await r.json();
-  av.className = 'aviso' + (d.sube_precio ? '' : ' ok');
-  av.textContent = '📅 ' + d.mensaje;
-  av.classList.remove('hide');
+  if(!destino){ av.className='aviso'; av.textContent='Elige un destino primero para revisar la temporada.'; av.classList.remove('hide'); return; }
+  av.className='aviso'; av.innerHTML='<span class="spin"></span>Revisando temporada…'; av.classList.remove('hide');
+  const body = { destino,
+    fecha_salida: document.getElementById('fecha_salida').value || null,
+    fecha_regreso: document.getElementById('fecha_regreso').value || null };
+  try{
+    const r = await fetch('/api/tracy/precheck', {method:'POST',
+      headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+    if(!r.ok){ av.className='aviso'; av.textContent='No se pudo evaluar la temporada.'; return; }
+    const d = await r.json();
+    av.className = 'aviso' + (d.sube_precio ? '' : ' ok');
+    av.textContent = '📅 ' + d.mensaje;
+  }catch(_){ av.className='aviso'; av.textContent='No se pudo evaluar la temporada.'; }
 }
 
+/* ---- Validación + resumen + creación ---- */
 function num(id){ const v=document.getElementById(id).value; return v===''?null:Number(v); }
+function clearErrs(){
+  document.querySelectorAll('.field-err').forEach(e=>e.textContent='');
+  document.querySelectorAll('.bad').forEach(e=>e.classList.remove('bad'));
+  document.getElementById('err-form').textContent='';
+}
+function setErr(id, feId, msg){ document.getElementById(feId).textContent=msg; const el=document.getElementById(id); if(el) el.classList.add('bad'); }
+
+function validar(){
+  clearErrs();
+  let ok = true;
+  const wa = document.getElementById('whatsapp').value.replace(/\D/g,'');
+  if(wa.length < 10){ setErr('whatsapp','fe-whatsapp','Escribe tu WhatsApp con código de país (solo dígitos).'); ok=false; }
+  if(!document.getElementById('origen').value){ setErr('origen','fe-origen','Elige país y aeropuerto de origen.'); ok=false; }
+  if(!document.getElementById('destino').value){ setErr('destino','fe-destino','Elige país y aeropuerto de destino.'); ok=false; }
+  const macro = document.getElementById('macro').value;
+  if(macro!=='vuelo' && !num('noches')){ setErr('noches','fe-noches','Indica el número de noches.'); ok=false; }
+  if(!MODO){ document.getElementById('err-form').textContent='Elige un modo de consulta.'; ok=false; }
+  if(MODO==='rastreo' && !rastreoSel.length){ document.getElementById('err-form').textContent='Marca al menos un día de rastreo.'; ok=false; }
+  return ok;
+}
+
+function resumenLegible(){
+  const o = document.getElementById('origen'); const d = document.getElementById('destino');
+  const oName = o.options[o.selectedIndex]?.text || o.value;
+  const dName = d.options[d.selectedIndex]?.text || d.value;
+  const fs = document.getElementById('fecha_salida').value || '—';
+  const fr = document.getElementById('fecha_regreso').value || '—';
+  const moneda = document.getElementById('moneda').value;
+  const macro = document.getElementById('macro').selectedOptions[0].text;
+  const entregas = document.getElementById('resumen-entregas').textContent || '';
+  const modoTxt = {rapida:'Consulta rápida', rastreo:'Rastreo', seguimiento:'Seguimiento'}[MODO];
+  return `<b>Revisa antes de confirmar</b><br>
+    📍 ${oName} → ${dName}<br>
+    🗓️ Salida: ${fs} · Regreso: ${fr}<br>
+    🎯 ${macro} · 💱 ${moneda}<br>
+    🔁 Modo: ${modoTxt}<br>
+    ${entregas}`;
+}
+
+function revisarYConfirmar(){
+  if(!validar()) return;
+  document.getElementById('resumen-final').innerHTML = resumenLegible();
+  document.getElementById('confirmar').classList.remove('hide');
+  document.getElementById('btn-crear').classList.add('hide');
+}
+function editar(){
+  document.getElementById('confirmar').classList.add('hide');
+  document.getElementById('btn-crear').classList.remove('hide');
+}
 
 async function crear(){
   const err = document.getElementById('err-form'); err.textContent='';
-  const modo = document.getElementById('modo').value;
+  const btn = document.getElementById('btn-confirmar');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span>Buscando…';
   const body = {
     clave: CLAVE,
     whatsapp: document.getElementById('whatsapp').value,
@@ -222,22 +457,30 @@ async function crear(){
     noches: num('noches'),
     hotel_precio_min: num('hotel_min'),
     hotel_precio_max: num('hotel_max'),
-    moneda: 'COP',
-    modo,
-    opcion1_dia: modo==='opcion1' ? num('opcion1_dia') : null,
-    opcion2_dias: modo==='opcion2' ? num('opcion2_dias') : null
+    moneda: document.getElementById('moneda').value,
+    modo: MODO,
+    rastreo_dias: MODO==='rastreo' ? rastreoSel : null,
+    seguimiento_cantidad: MODO==='seguimiento' ? num('seg_cantidad') : null,
+    seguimiento_frecuencia: MODO==='seguimiento' ? num('seg_frecuencia') : null
   };
-  const r = await fetch('/api/tracy/consultas', {method:'POST',
-    headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
-  if(!r.ok){
-    let msg='Error al crear la consulta';
-    try{ const e=await r.json(); msg = (typeof e.detail==='string')?e.detail:JSON.stringify(e.detail); }catch(_){}
-    err.textContent = msg; return;
+  try{
+    const r = await fetch('/api/tracy/consultas', {method:'POST',
+      headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+    if(!r.ok){
+      let msg='No se pudo crear la consulta.';
+      try{ const e=await r.json(); msg=(typeof e.detail==='string')?e.detail:JSON.stringify(e.detail); }catch(_){}
+      err.textContent = msg; return;
+    }
+    const d = await r.json();
+    document.getElementById('codigo').textContent = d.codigo;
+    document.getElementById('wa-link').href = d.wa_link;
+    document.getElementById('confirmar').classList.add('hide');
+    document.getElementById('resultado').classList.remove('hide');
+  }catch(_){
+    err.textContent = 'No se pudo crear la consulta. Revisa tu conexión.';
+  }finally{
+    btn.disabled = false; btn.textContent = '✅ Confirmar y activar';
   }
-  const d = await r.json();
-  document.getElementById('codigo').textContent = d.codigo;
-  document.getElementById('wa-link').href = d.wa_link;
-  document.getElementById('resultado').classList.remove('hide');
 }
 </script>
 </body>

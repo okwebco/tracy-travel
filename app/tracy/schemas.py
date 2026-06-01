@@ -3,11 +3,22 @@ from datetime import date
 from typing import Optional
 from pydantic import BaseModel, field_validator
 
+from app.tracy.modos import (
+    MODOS, RASTREO_DIAS, SEGUIMIENTO_CANTIDADES, SEGUIMIENTO_FRECUENCIAS,
+)
+
 
 MACROS = {"vuelo", "hospedaje", "ambos"}
 MOTIVOS = {"turismo", "negocios", "familiar", "otros"}
-MODOS = {"opcion1", "opcion2"}
-OPCION1_DIAS = {1, 3, 5, 8, 15, 30}
+MONEDAS = {"COP", "USD", "EUR"}
+
+
+class AccesoRequest(BaseModel):
+    clave: str
+
+
+class AccesoResponse(BaseModel):
+    ok: bool
 
 
 class PrecheckRequest(BaseModel):
@@ -38,8 +49,11 @@ class ConsultaCreate(BaseModel):
     hotel_precio_max: Optional[float] = None
     moneda: str = "COP"
     modo: str
-    opcion1_dia: Optional[int] = None
-    opcion2_dias: Optional[int] = None
+    # Rastreo: lista de días marcados (acumulativos), p. ej. [1,3,5,8].
+    rastreo_dias: Optional[list[int]] = None
+    # Seguimiento: cantidad de rastreos (2..6) y frecuencia en días.
+    seguimiento_cantidad: Optional[int] = None
+    seguimiento_frecuencia: Optional[int] = None
 
     @field_validator("whatsapp")
     @classmethod
@@ -79,8 +93,19 @@ class ConsultaCreate(BaseModel):
             raise ValueError(f"modo debe ser uno de {MODOS}")
         return v
 
+    @field_validator("moneda")
+    @classmethod
+    def _moneda(cls, v: str) -> str:
+        v = (v or "COP").strip().upper()
+        if v not in MONEDAS:
+            raise ValueError(f"moneda debe ser una de {MONEDAS}")
+        return v
+
 
 class ConsultaResponse(BaseModel):
     consulta_id: int
     codigo: str
     wa_link: str
+    modo: str
+    resumen_entregas: str          # texto legible: "ahora, al día 3, al día 5…"
+    entregas_totales: int

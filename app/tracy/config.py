@@ -13,8 +13,8 @@ def _env(nombre: str, defecto: str = "") -> str:
 # Modo de aplicación: "tracy" activa el módulo Tracy; ausente/"finanzas" = app original
 APP_MODE = _env("APP_MODE", "finanzas").lower()
 
-# Clave de acceso a la landing pública
-LANDING_PASSWORD = _env("LANDING_PASSWORD", "310Koyak+$")
+# Clave de acceso a la landing pública (default shell-safe Tracy310, ADENDA v2 §D)
+LANDING_PASSWORD = _env("LANDING_PASSWORD", "Tracy310")
 
 # Token para proteger los endpoints de cron internos
 CRON_TOKEN = _env("CRON_TOKEN", "")

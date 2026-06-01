@@ -11,8 +11,15 @@ from app.database import Base
 
 
 class Consulta(Base):
-    """Una consulta acotada de rastreo: vuelo, hospedaje o ambos, con un modo
-    de entrega (opción 1: punto único; opción 2: diaria X días)."""
+    """Una consulta acotada de rastreo: vuelo, hospedaje o ambos.
+
+    Modos de entrega (ADENDA v2):
+      - `rapida`     : 1 búsqueda inmediata, una sola vez.
+      - `rastreo`    : casillas acumulativas {1,3,5,8,15,30}; informa en cada día
+                       marcado (día 1 = inmediato). Termina en el último marcado.
+      - `seguimiento`: N rastreos (2..6) cada `seguimiento_frecuencia` días;
+                       el #1 es inmediato y luego cada N días.
+    """
     __tablename__ = "tracy_consultas"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -31,9 +38,12 @@ class Consulta(Base):
     hotel_precio_max = Column(Float, nullable=True)
     moneda = Column(String(5), default="COP")
 
-    modo = Column(String(10), nullable=False)            # opcion1 | opcion2
-    opcion1_dia = Column(Integer, nullable=True)         # {1,3,5,8,15,30}
-    opcion2_dias = Column(Integer, nullable=True)        # 1..8
+    modo = Column(String(12), nullable=False)            # rapida | rastreo | seguimiento
+    # Rastreo: CSV de días marcados (acumulativos), p. ej. "1,3,5,8".
+    rastreo_dias = Column(String(40), nullable=True)
+    # Seguimiento: cantidad de rastreos (2..6) y frecuencia en días.
+    seguimiento_cantidad = Column(Integer, nullable=True)
+    seguimiento_frecuencia = Column(Integer, nullable=True)
 
     estado = Column(String(20), default="pendiente_optin")  # pendiente_optin|activa|finalizada|cancelada
     codigo_optin = Column(String(12), nullable=True, index=True)
@@ -41,6 +51,9 @@ class Consulta(Base):
     proxima_ejecucion = Column(Date, nullable=True)
     ejecuciones_hechas = Column(Integer, default=0)
     ejecuciones_totales = Column(Integer, default=1)
+    # Fechas exactas de cada checkpoint (CSV ISO), calculadas al activar.
+    # La primera entrada es la entrega inmediata (#1).
+    checkpoints = Column(Text, nullable=True)
 
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

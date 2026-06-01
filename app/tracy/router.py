@@ -6,13 +6,37 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.tracy import config, catalogo, temporadas
+from app.tracy import config, catalogo, temporadas, modos as modos_mod
 from app.tracy.models import Consulta
 from app.tracy.schemas import (
-    PrecheckRequest, PrecheckResponse, ConsultaCreate, ConsultaResponse, OPCION1_DIAS,
+    PrecheckRequest, PrecheckResponse, ConsultaCreate, ConsultaResponse,
+    AccesoRequest, AccesoResponse,
 )
 
 router = APIRouter(prefix="/api/tracy", tags=["tracy"])
+
+
+@router.post("/acceso", response_model=AccesoResponse)
+async def acceso(req: AccesoRequest):
+    """Valida la clave de acceso a la landing ANTES de mostrar el formulario.
+
+    Compara contra LANDING_PASSWORD; rechaza cualquier otra cosa.
+    """
+    if (req.clave or "") != config.LANDING_PASSWORD:
+        raise HTTPException(status_code=401, detail="Clave incorrecta")
+    return AccesoResponse(ok=True)
+
+
+@router.get("/catalogo")
+async def obtener_catalogo():
+    """Catálogo agrupado país → aeropuertos para los selectores dependientes.
+
+    Origen = Colombia (sus aeropuertos). Destino = país → aeropuertos.
+    """
+    return {
+        "origenes": catalogo.origenes_por_pais(),
+        "destinos": catalogo.destinos_por_pais(),
+    }
 
 
 @router.post("/precheck", response_model=PrecheckResponse)
@@ -36,15 +60,38 @@ async def crear_consulta(req: ConsultaCreate, db: Session = Depends(get_db)):
     if not catalogo.es_destino_valido(req.destino):
         raise HTTPException(status_code=400, detail="Destino no está en el catálogo")
 
-    # Reglas por modo
-    if req.modo == "opcion1":
-        if req.opcion1_dia not in OPCION1_DIAS:
-            raise HTTPException(status_code=400, detail=f"opcion1_dia debe estar en {sorted(OPCION1_DIAS)}")
+    # Reglas por modo (ADENDA v2)
+    rastreo_dias_csv = None
+    seguimiento_cantidad = None
+    seguimiento_frecuencia = None
+
+    if req.modo == "rapida":
         ejecuciones_totales = 1
-    else:  # opcion2
-        if not req.opcion2_dias or not (1 <= req.opcion2_dias <= 8):
-            raise HTTPException(status_code=400, detail="opcion2_dias debe estar entre 1 y 8")
-        ejecuciones_totales = req.opcion2_dias
+
+    elif req.modo == "rastreo":
+        marcados = modos_mod.normalizar_rastreo_dias(req.rastreo_dias or [])
+        if not marcados:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Marca al menos un día de rastreo {modos_mod.RASTREO_DIAS}",
+            )
+        rastreo_dias_csv = ",".join(str(d) for d in marcados)
+        ejecuciones_totales = len(marcados)
+
+    else:  # seguimiento
+        if req.seguimiento_cantidad not in modos_mod.SEGUIMIENTO_CANTIDADES:
+            raise HTTPException(
+                status_code=400,
+                detail=f"seguimiento_cantidad debe estar en {sorted(modos_mod.SEGUIMIENTO_CANTIDADES)}",
+            )
+        if req.seguimiento_frecuencia not in modos_mod.SEGUIMIENTO_FRECUENCIAS:
+            raise HTTPException(
+                status_code=400,
+                detail=f"seguimiento_frecuencia debe estar en {sorted(modos_mod.SEGUIMIENTO_FRECUENCIAS)}",
+            )
+        seguimiento_cantidad = req.seguimiento_cantidad
+        seguimiento_frecuencia = req.seguimiento_frecuencia
+        ejecuciones_totales = seguimiento_cantidad
 
     # Hospedaje requiere noches si macro incluye hotel
     if req.macro in ("hospedaje", "ambos") and not req.noches:
@@ -66,8 +113,9 @@ async def crear_consulta(req: ConsultaCreate, db: Session = Depends(get_db)):
         hotel_precio_max=req.hotel_precio_max,
         moneda=(req.moneda or config.MONEDA_DEFECTO).upper(),
         modo=req.modo,
-        opcion1_dia=req.opcion1_dia,
-        opcion2_dias=req.opcion2_dias,
+        rastreo_dias=rastreo_dias_csv,
+        seguimiento_cantidad=seguimiento_cantidad,
+        seguimiento_frecuencia=seguimiento_frecuencia,
         estado="pendiente_optin",
         codigo_optin=codigo,
         ejecuciones_totales=ejecuciones_totales,
@@ -80,4 +128,11 @@ async def crear_consulta(req: ConsultaCreate, db: Session = Depends(get_db)):
     texto = f"Hola Tracy, activa {codigo}"
     wa_link = f"https://wa.me/{config.WHATSAPP_SENDER}?text={urllib.parse.quote(texto)}"
 
-    return ConsultaResponse(consulta_id=consulta.id, codigo=codigo, wa_link=wa_link)
+    return ConsultaResponse(
+        consulta_id=consulta.id,
+        codigo=codigo,
+        wa_link=wa_link,
+        modo=consulta.modo,
+        resumen_entregas=modos_mod.resumen_entregas(consulta),
+        entregas_totales=ejecuciones_totales,
+    )

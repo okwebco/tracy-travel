@@ -11,9 +11,21 @@ datos de ejemplo (mock) y los envíos de WhatsApp se registran en consola.
 
 ## Componentes
 
-- **Landing** (`/`): formulario público con catálogo de orígenes/destinos.
-- **API** (`/api/tracy`): precheck de temporada y creación de consultas.
+- **Landing** (`/`): formulario público mobile-first. Pide la clave de acceso
+  (validada en `POST /api/tracy/acceso`) antes de mostrar el formulario.
+- **API** (`/api/tracy`): `acceso` (valida clave), `catalogo` (país→aeropuertos),
+  `precheck` (temporada) y `consultas` (creación).
 - **Webhook** (`/api/webhook/whatsapp`): opt-in por código y `CANCELAR` (Green API).
+  Al activar una consulta de Rastreo o Seguimiento se genera y envía el primer
+  reporte de inmediato (entrega #1).
+
+### Modos de consulta (el usuario elige uno)
+
+- **Consulta rápida** (`rapida`): 1 búsqueda inmediata, una sola vez.
+- **Rastreo** (`rastreo`): casillas acumulativas `{1,3,5,8,15,30}` días; informa
+  en cada día marcado (día 1 = inmediato). Marcar un día auto-marca los inferiores.
+- **Seguimiento** (`seguimiento`): cantidad `{2..6}` × frecuencia cada
+  `{2,3,5,7,15,30}` días; el #1 es inmediato y luego cada N días.
 - **Crons** (`/api/internal/cron/{revisar,notificar,purga}`): protegidos por
   header `X-Cron-Token`. También se ejecutan vía APScheduler en local.
 - **Reporte** (`/{numero}`): página server-side del último reporte vigente del
