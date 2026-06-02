@@ -101,8 +101,10 @@ def mensaje_whatsapp_resumen(payload: dict, numero: str, cierre: bool = False,
         if v.get("fecha_regreso"):
             fechas = f"{fechas} → {v['fecha_regreso']}"
         lineas.append(f"Mejor vuelo: {_fmt_precio(v['precio'], moneda)} ({v.get('aerolinea','')}, {fechas})")
+        lineas.append(f"👉 *{payload.get('frase','')}*")  # *…* = negrita en WhatsApp
+    else:
+        lineas.append("✈️ No encontramos vuelos para estas fechas en este momento.")
 
-    lineas.append(f"👉 {payload.get('frase','')}")
     lineas.append(f"Ver detalle (48 h): {config.PUBLIC_BASE_URL}/{numero}")
 
     if cierre:

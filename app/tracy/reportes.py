@@ -63,8 +63,10 @@ def _tarjeta_vuelo(v: dict, moneda: str) -> str:
     escalas_txt = "Directo" if escalas == 0 else (f"{escalas} escala(s)" if escalas else "")
     link = _esc(v.get("link") or "#")
     return f"""<div class="card">
-      <div class="precio">{_fmt_precio(v.get('precio'), moneda)}</div>
-      <div class="meta">{_esc(v.get('aerolinea') or '')} · {fechas} · {escalas_txt}</div>
+      <div class="info">
+        <div class="precio">{_fmt_precio(v.get('precio'), moneda)}</div>
+        <div class="meta">{_esc(v.get('aerolinea') or '')} · {fechas} · {escalas_txt}</div>
+      </div>
       <a class="btn" href="{link}" target="_blank" rel="noopener nofollow">Ver / reservar</a>
     </div>"""
 
@@ -81,6 +83,9 @@ def _render(payload: dict, creado: datetime) -> str:
     bloques = []
     if vuelos:
         bloques.append("<h3>✈️ Top 3 vuelos</h3>" + "".join(_tarjeta_vuelo(v, moneda) for v in vuelos))
+    else:
+        bloques.append('<div class="aviso">✈️ No encontramos vuelos para estas fechas en este momento. '
+                       'Prueba con otras fechas o inicia otra consulta.</div>')
 
     temporada = payload.get("temporada") or {}
     temp_html = ""
@@ -102,15 +107,17 @@ body{{font-family:system-ui,sans-serif;background:#0f172a;color:#e2e8f0;margin:0
 header{{text-align:center;padding:24px 0 8px}}
 h1{{font-size:22px;margin:6px 0}}
 .ruta{{color:#94a3b8}}
-.frase{{display:inline-block;background:#22c55e;color:#06281a;font-weight:700;
-border-radius:999px;padding:8px 18px;margin:10px 0;font-size:18px}}
-.aviso{{background:#1e293b;border-left:4px solid #f59e0b;padding:12px;border-radius:8px;margin:14px 0}}
+.frase{{display:inline-block;background:#16a34a;color:#fff;font-weight:800;
+border-radius:999px;padding:10px 22px;margin:12px 0;font-size:20px;letter-spacing:.3px}}
+.aviso{{background:#1e293b;border-left:4px solid #f59e0b;padding:12px;border-radius:8px;margin:14px 0;font-size:15px}}
 h3{{margin:22px 0 10px;border-bottom:1px solid #334155;padding-bottom:6px}}
-.card{{background:#1e293b;border-radius:12px;padding:14px;margin:10px 0}}
+.card{{background:#1e293b;border-radius:12px;padding:14px;margin:10px 0;
+display:flex;align-items:center;justify-content:space-between;gap:14px}}
+.info{{flex:1 1 auto;min-width:0}}
 .precio{{font-size:22px;font-weight:700;color:#38bdf8}}
-.meta{{color:#cbd5e1;margin:6px 0 10px;font-size:14px}}
+.meta{{color:#cbd5e1;margin:6px 0 0;font-size:14px}}
 .btn{{display:inline-block;background:#38bdf8;color:#06283b;text-decoration:none;
-font-weight:600;border-radius:8px;padding:8px 14px;margin-right:8px;font-size:14px}}
+font-weight:700;border-radius:8px;padding:10px 16px;font-size:14px;white-space:nowrap;flex:0 0 auto}}
 .hola{{color:#e2e8f0;font-size:15px;margin:2px 0 4px}}
 .tipo{{color:#94a3b8;font-size:13px}}
 footer{{margin-top:26px;color:#64748b;font-size:12px;text-align:center;line-height:1.6}}

@@ -337,9 +337,8 @@ function llenarPaises(selId, grupos, ph){
   s.innerHTML = '<option value="">'+ph+'</option>';
   Object.keys(grupos).forEach(p=>{
     const o = document.createElement('option'); o.value=p;
-    const bandera = grupos[p].bandera || '';
-    // Bandera a la izquierda del nombre del país.
-    o.textContent = (bandera ? bandera+' ' : '') + p;
+    // Nombre limpio del país (los <select> nativos no renderizan banderas en Windows).
+    o.textContent = p;
     s.appendChild(o);
   });
 }

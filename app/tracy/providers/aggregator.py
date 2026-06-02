@@ -29,17 +29,16 @@ def _instanciar(nombres: list[str]) -> list:
 
 
 async def buscar_vuelos(consulta) -> list[dict]:
-    activos = [p for p in _instanciar(config.PROVEEDORES_VUELOS) if getattr(p, "disponible", False)]
-    if not activos:
-        activos = [_MOCK]
+    reales = [p for p in _instanciar(config.PROVEEDORES_VUELOS) if getattr(p, "disponible", False)]
+    # En producción (hay proveedor real) NO se usa mock: si no hay datos se
+    # devuelve vacío. Mejor "sin vuelos" que ofertas falsas con enlaces rotos.
+    # El mock solo aplica en MODO DEMO (sin ninguna credencial real).
+    activos = reales if reales else [_MOCK]
     resultados: list[dict] = []
     for p in activos:
         try:
             resultados.extend(await p.buscar_vuelos(consulta))
         except Exception as e:
             print(f"[Tracy/Aggregator] {p.nombre} vuelos falló: {e}")
-    if not resultados:
-        # Degradación: si los proveedores reales no devolvieron nada, usar mock
-        resultados = await _MOCK.buscar_vuelos(consulta)
     resultados.sort(key=lambda o: o["precio"])
     return resultados[:3]
