@@ -63,9 +63,11 @@ def _activar(db: Session, consulta: Consulta) -> None:
 @router.post("/whatsapp")
 async def webhook_whatsapp(request: Request):
     # Validación de origen: si WEBHOOK_SECRET está configurado, el header
-    # X-Webhook-Secret debe coincidir; sin él se opera en modo abierto (dev/demo).
+    # Authorization que envía Green API debe coincidir; sin él se opera en
+    # modo abierto (dev/demo). Green API manda el valor tal cual (sin "Bearer"),
+    # pero toleramos ese prefijo por si se configura con él.
     if WEBHOOK_SECRET:
-        token = request.headers.get("X-Webhook-Secret", "")
+        token = request.headers.get("Authorization", "").removeprefix("Bearer ").strip()
         if token != WEBHOOK_SECRET:
             raise HTTPException(status_code=403, detail="Firma inválida")
 
