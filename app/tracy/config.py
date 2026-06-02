@@ -4,6 +4,7 @@ Todo lee de variables de entorno con valores por defecto seguros para MODO DEMO.
 Nunca crashea si faltan credenciales: degradación elegante.
 """
 import os
+import secrets
 
 
 def _env(nombre: str, defecto: str = "") -> str:
@@ -16,8 +17,13 @@ APP_MODE = _env("APP_MODE", "finanzas").lower()
 # Clave de acceso a la landing pública (default shell-safe Tracy310, ADENDA v2 §D)
 LANDING_PASSWORD = _env("LANDING_PASSWORD", "Tracy310")
 
-# Token para proteger los endpoints de cron internos
-CRON_TOKEN = _env("CRON_TOKEN", "")
+# Token para proteger los endpoints de cron internos.
+# Si no se define, se genera uno aleatorio al arrancar (nunca queda vacío).
+_cron_token_env = _env("CRON_TOKEN", "")
+CRON_TOKEN = _cron_token_env if _cron_token_env else secrets.token_urlsafe(32)
+
+# Secret para validar que los webhooks vienen de Green API y no de terceros.
+WEBHOOK_SECRET = _env("WEBHOOK_SECRET", "")
 
 # WhatsApp (Green API) — número emisor de Tracy
 WHATSAPP_SENDER = _env("WHATSAPP_SENDER", "573126593121")

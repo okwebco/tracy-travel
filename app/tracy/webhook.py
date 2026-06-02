@@ -6,12 +6,13 @@ from datetime import date
 import json
 import re
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import SessionLocal
 from app.tracy.models import Consulta
 from app.tracy import services, modos as modos_mod
+from app.tracy.config import WEBHOOK_SECRET
 from app.services.whatsapp import send_whatsapp
 
 router = APIRouter(prefix="/api/webhook", tags=["tracy-webhook"])
@@ -61,6 +62,13 @@ def _activar(db: Session, consulta: Consulta) -> None:
 
 @router.post("/whatsapp")
 async def webhook_whatsapp(request: Request):
+    # Validación de origen: si WEBHOOK_SECRET está configurado, el header
+    # X-Webhook-Secret debe coincidir; sin él se opera en modo abierto (dev/demo).
+    if WEBHOOK_SECRET:
+        token = request.headers.get("X-Webhook-Secret", "")
+        if token != WEBHOOK_SECRET:
+            raise HTTPException(status_code=403, detail="Firma inválida")
+
     try:
         payload = await request.json()
     except Exception:
