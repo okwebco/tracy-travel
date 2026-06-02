@@ -63,6 +63,29 @@ async def health():
     return {"ok": True, "modo": APP_MODE}
 
 
+@app.get("/api/debug/egress")
+async def debug_egress():
+    """Diagnóstico temporal: prueba la salida a internet desde Cloud Run."""
+    import httpx
+    from app.tracy import config
+    _UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"}
+    pruebas = {
+        "ipify": "https://api.ipify.org?format=json",
+        "travelpayouts": ("https://api.travelpayouts.com/aviasales/v3/prices_for_dates"
+                          f"?origin=BOG&destination=GRU&departure_at=2026-07&currency=cop&limit=1&token={config.TRAVELPAYOUTS_TOKEN}"),
+        "greenapi": "https://api.green-api.com/",
+    }
+    out = {"httpx": httpx.__version__}
+    for nombre, url in pruebas.items():
+        try:
+            async with httpx.AsyncClient(timeout=15.0, follow_redirects=True, headers=_UA) as client:
+                r = await client.get(url)
+                out[nombre] = {"status": r.status_code, "len": len(r.text), "body": r.text[:200]}
+        except Exception as e:
+            out[nombre] = {"error": repr(e)}
+    return out
+
+
 def _landing_tracy() -> HTMLResponse:
     """Sirve la landing de Tracy inyectando los catálogos agrupados por país."""
     from app.tracy import catalogo
