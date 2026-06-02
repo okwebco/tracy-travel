@@ -35,11 +35,12 @@ TRAVELPAYOUTS_MARKER = _env("TRAVELPAYOUTS_MARKER", "")
 # Moneda por defecto
 MONEDA_DEFECTO = _env("MONEDA_DEFECTO", "COP")
 
-# Tiempo de vida de los reportes (horas)
+# Tiempo de vida INTERNO de los reportes (horas). Al usuario le mostramos "48 h",
+# pero conservamos/borramos a las 72 h (colchón de gracia).
 try:
-    REPORTE_TTL_HORAS = int(_env("REPORTE_TTL_HORAS", "48"))
+    REPORTE_TTL_HORAS = int(_env("REPORTE_TTL_HORAS", "72"))
 except ValueError:
-    REPORTE_TTL_HORAS = 48
+    REPORTE_TTL_HORAS = 72
 
 
 def es_modo_tracy() -> bool:

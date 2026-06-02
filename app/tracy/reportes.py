@@ -134,46 +134,43 @@ def _bloque_tramo(etiqueta: str, vuelos: list, moneda: str,
     return f'<h3 class="tramo">{titulo}</h3>{tarjetas}'
 
 
-def _render(payload: dict, creado: datetime) -> str:
+def _bloque_consulta(payload: dict, creado: datetime) -> str:
+    """Una consulta como bloque: título (fecha + destinos) + frase + tramos."""
     moneda = payload.get("moneda", "COP")
     o = _esc(payload.get("origen_nombre") or payload.get("origen"))
     d = _esc(payload.get("destino_nombre") or payload.get("destino"))
-    nombre_completo = _esc((str(payload.get("nombre") or "") + " " + str(payload.get("apellido") or "")).strip())
-
-    origen_iata = payload.get("origen") or ""
-    destino_iata = payload.get("destino") or ""
-
-    bloques = []
-    # Bloque IDA (siempre)
-    bloques.append(_bloque_tramo(
-        "IDA", payload.get("vuelos_ida") or [], moneda,
-        origen_iata, destino_iata, payload.get("fecha_salida"), "la ida"))
-
-    # Bloque VUELTA (opcional)
-    if payload.get("tiene_vuelta"):
-        bloques.append(_bloque_tramo(
-            "VUELTA", payload.get("vuelos_vuelta") or [], moneda,
-            payload.get("origen_vuelta") or "", payload.get("destino_vuelta") or "",
-            payload.get("fecha_vuelta"), "la vuelta"))
-
-    temporada = payload.get("temporada") or {}
-    temp_html = ""
-    if temporada.get("mensaje"):
-        temp_html = f'<div class="aviso">📅 {_esc(temporada["mensaje"])}</div>'
-
-    frase = _esc(payload.get("frase") or "")
-    disclaimer = _esc(payload.get("disclaimer") or "")
-
-    ruta_html = f'<div class="ruta">{o} → {d}</div>'
+    titulo = f"🗓️ {_esc(creado.strftime('%Y-%m-%d %H:%M'))} · {o} → {d}"
     if payload.get("tiene_vuelta"):
         ov = _esc(payload.get("origen_vuelta_nombre") or payload.get("origen_vuelta") or "")
         dv = _esc(payload.get("destino_vuelta_nombre") or payload.get("destino_vuelta") or "")
-        ruta_html += f'<div class="ruta">Vuelta: {ov} → {dv}</div>'
+        titulo += f" · vuelta {ov} → {dv}"
 
+    tramos = _bloque_tramo("IDA", payload.get("vuelos_ida") or [], moneda,
+                           payload.get("origen") or "", payload.get("destino") or "",
+                           payload.get("fecha_salida"), "la ida")
+    if payload.get("tiene_vuelta"):
+        tramos += _bloque_tramo("VUELTA", payload.get("vuelos_vuelta") or [], moneda,
+                                payload.get("origen_vuelta") or "", payload.get("destino_vuelta") or "",
+                                payload.get("fecha_vuelta"), "la vuelta")
+
+    temporada = payload.get("temporada") or {}
+    temp_html = f'<div class="aviso">📅 {_esc(temporada["mensaje"])}</div>' if temporada.get("mensaje") else ""
+    frase = _esc(payload.get("frase") or "")
+    frase_html = f'<div class="frase">{frase}</div>' if frase else ""
+    return (f'<section class="consulta"><h2 class="ctitulo">{titulo}</h2>'
+            f'{frase_html}{temp_html}{tramos}</section>')
+
+
+def _render_pagina(items: list) -> str:
+    """Página personalizada: encabezado + hasta 6 bloques de consulta (más reciente arriba)."""
+    primer = items[0][0]
+    nombre_completo = _esc((str(primer.get("nombre") or "") + " " + str(primer.get("apellido") or "")).strip())
+    saludo = f'<div class="hola">¡Hola {nombre_completo}!</div>' if nombre_completo else ""
+    bloques = "".join(_bloque_consulta(p, c) for (p, c) in items)
     return f"""<!doctype html><html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>Tracy Travel — {o} → {d}</title>
+<title>Tracy Travel — tus consultas</title>
 <style>
 :root{{color-scheme:dark}}
 body{{font-family:system-ui,sans-serif;background:#0f172a;color:#e2e8f0;margin:0;padding:0 0 40px}}
@@ -181,11 +178,13 @@ body{{font-family:system-ui,sans-serif;background:#0f172a;color:#e2e8f0;margin:0
 header{{text-align:center;padding:24px 0 8px}}
 h1{{font-size:22px;margin:6px 0}}
 .ruta{{color:#94a3b8}}
+.consulta{{border-top:1px solid #334155;margin-top:18px;padding-top:4px}}
+.ctitulo{{font-size:15px;font-weight:700;color:#e2e8f0;margin:16px 0 6px}}
 .frase{{display:inline-block;background:#16a34a;color:#fff;font-weight:800;
-border-radius:999px;padding:10px 22px;margin:12px 0;font-size:20px;letter-spacing:.3px}}
-.aviso{{background:#1e293b;border-left:4px solid #f59e0b;padding:12px;border-radius:8px;margin:14px 0;font-size:15px}}
-h3{{margin:22px 0 10px;border-bottom:1px solid #334155;padding-bottom:6px}}
-h3.tramo{{color:#38bdf8;font-size:18px}}
+border-radius:999px;padding:8px 18px;margin:8px 0;font-size:17px}}
+.aviso{{background:#1e293b;border-left:4px solid #f59e0b;padding:12px;border-radius:8px;margin:12px 0;font-size:15px}}
+h3{{margin:16px 0 8px}}
+h3.tramo{{color:#38bdf8;font-size:17px}}
 .card{{background:#1e293b;border-radius:12px;padding:14px;margin:10px 0}}
 .precio{{font-size:22px;font-weight:700;color:#38bdf8}}
 .precio-row{{display:flex;align-items:center;justify-content:space-between;gap:10px}}
@@ -200,15 +199,13 @@ footer a.creditos{{color:#3b82f6;text-decoration:underline}}
 <header>
   <div style="font-size:40px">🕵️</div>
   <h1>Tracy Travel</h1>
-  {f'<div class="hola">¡Hola {nombre_completo}!</div>' if nombre_completo else ''}
-  {ruta_html}
-  <div class="frase">{frase}</div>
+  {saludo}
+  <div class="ruta">Tus consultas recientes</div>
 </header>
-{temp_html}
-{''.join(bloques)}
+{bloques}
 <footer>
-  <div>{disclaimer}</div>
-  <div>Reporte generado {_esc(creado.strftime('%Y-%m-%d %H:%M'))} UTC · se borra a las 48 h.</div>
+  <div>Precios vistos al momento de la búsqueda; pueden variar.</div>
+  <div>Tus reportes se borran a las 48 h por privacidad.</div>
   <div><a class="creditos" href="http://okweb.co/jhoveloro/tracy-travel" target="_blank" rel="noopener nofollow">Tracy Travel | Crea Ok Web ® | 2026</a></div>
 </footer>
 </div></body></html>"""
@@ -218,17 +215,26 @@ def pagina_reporte(numero: str, db: Session) -> HTMLResponse:
     numero = re.sub(r"\D", "", numero or "")
     if not numero:
         return _pagina_expirado()
-    reporte = (db.query(Reporte)
-               .filter(Reporte.numero == numero, Reporte.expires_at > datetime.utcnow())
-               .order_by(Reporte.created_at.desc())
-               .first())
-    if not reporte:
+    # Reportes no expirados del número, más reciente primero.
+    reportes = (db.query(Reporte)
+                .filter(Reporte.numero == numero, Reporte.expires_at > datetime.utcnow())
+                .order_by(Reporte.created_at.desc())
+                .all())
+    # Una entrada por consulta (su reporte más reciente), hasta 6 bloques.
+    items, vistas = [], set()
+    for r in reportes:
+        if r.consulta_id in vistas:
+            continue
+        vistas.add(r.consulta_id)
+        try:
+            items.append((json.loads(r.payload_json), r.created_at))
+        except Exception:
+            continue
+        if len(items) >= 6:
+            break
+    if not items:
         return _pagina_expirado()
-    try:
-        payload = json.loads(reporte.payload_json)
-    except Exception:
-        return _pagina_expirado()
-    return HTMLResponse(_render(payload, reporte.created_at), headers=_NOINDEX_HEADERS)
+    return HTMLResponse(_render_pagina(items), headers=_NOINDEX_HEADERS)
 
 
 @router.get("/{numero}", response_class=HTMLResponse)

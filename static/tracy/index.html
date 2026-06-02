@@ -31,7 +31,7 @@ h1{font-size:30px;font-weight:800;margin:8px 0 4px;letter-spacing:-.5px}
 .card{background:#1e293b;border-radius:14px;padding:18px;margin:14px 0}
 label{display:block;font-size:13px;color:#cbd5e1;margin:14px 0 5px;font-weight:600}
 label:first-child{margin-top:0}
-input,select{width:100%;padding:12px;min-height:48px;border-radius:10px;border:1px solid #334155;
+input,select{width:100%;padding:12px;height:48px;border-radius:10px;border:1px solid #334155;
 background:#0f172a;color:#e2e8f0;font-size:16px;appearance:none}
 input:focus,select:focus{outline:none;border-color:#38bdf8}
 input.bad,select.bad{border-color:#f87171}
@@ -91,7 +91,7 @@ padding:6px 10px;cursor:pointer;font-size:13px;background:#0f172a;white-space:no
 #btn-vuela{margin-top:10px}
 /* Selector de país personalizado con bandera (imagen) */
 .pais-picker{position:relative}
-.pp-btn{display:flex;align-items:center;gap:8px;width:100%;padding:12px;min-height:48px;border-radius:10px;
+.pp-btn{display:flex;align-items:center;gap:8px;width:100%;padding:0 12px;height:48px;border-radius:10px;
 border:1px solid #334155;background:#0f172a;color:#e2e8f0;font-size:16px;cursor:pointer;text-align:left}
 .pp-btn.bad{border-color:#f87171}
 .pp-btn img{width:24px;height:18px;border-radius:2px;object-fit:cover;flex:0 0 auto}
@@ -117,8 +117,8 @@ border:1px solid #334155;border-radius:10px;max-height:280px;overflow:auto;box-s
     <!-- F2 -->
     <div class="sub">
       <p style="font-weight:700;margin:0 0 12px">Tracy Travel investiga y rastrea precios de vuelos.</p>
-      <p style="margin:0 0 12px">Desde una página pública eliges origen, destino, fechas y modo de seguimiento.</p>
-      <p style="margin:0">Tracy Travel confirma la suscripción por WhatsApp (opt-in), revisa precios cada día y envía un reporte con las mejores ofertas, enlazando a una página de reporte que se autodestruye a las 48 horas.</p>
+      <p style="margin:0 0 12px">Elige origen, destino, fechas y modo de seguimiento.</p>
+      <p style="margin:0">Tracy Travel confirma tu suscripción por WhatsApp, investiga precios cada día y te envía un reporte con los mejores precios, visibles por 48 horas en tu página personalizada de reporte.</p>
     </div>
   </header>
 
@@ -240,7 +240,6 @@ border:1px solid #334155;border-radius:10px;max-height:280px;overflow:auto;box-s
       <option value="EUR">EUR — Euro</option>
     </select>
 
-    <label style="font-weight:400"><input type="checkbox" id="flexible" style="width:auto"> Fechas flexibles</label>
 
     <!-- Modo de consulta -->
     <label>Modo de consulta</label>
@@ -292,13 +291,13 @@ border:1px solid #334155;border-radius:10px;max-height:280px;overflow:auto;box-s
 
     <!-- Activar: aparece junto al auto-resumen -->
     <div id="activar" class="hide">
-      <button onclick="crear()" id="btn-confirmar">✅ Activar por WhatsApp</button>
+      <button onclick="crear()" id="btn-confirmar" class="wa">✅ Activar envío de alerta por WhatsApp</button>
     </div>
 
     <!-- Resultado: enlace de opt-in -->
     <div id="resultado" class="hide">
       <div class="aviso ok"><b>¡Casi listo!</b> Toca el botón 👉 se abrirá WhatsApp con un mensaje ya listo 👉 solo envíalo y te llega tu reporte.</div>
-      <a class="wa" id="wa-link" href="#" target="_blank">Activar por WhatsApp 💬</a>
+      <a class="wa" id="wa-link" href="#" target="_blank">Activar envío de alerta por WhatsApp 💬</a>
       <div class="ok-msg" style="margin-top:10px">✅ En cuanto envíes el mensaje, Tracy te manda tu primer reporte por WhatsApp.</div>
     </div>
 
@@ -669,7 +668,6 @@ async function crear(){
     origen_vuelta: conVuelta ? (document.getElementById('origen_vuelta').value || null) : null,
     destino_vuelta: conVuelta ? (document.getElementById('destino_vuelta').value || null) : null,
     fecha_vuelta: conVuelta ? (document.getElementById('fecha_vuelta').value || null) : null,
-    flexible: document.getElementById('flexible').checked,
     moneda: document.getElementById('moneda').value,
     modo: MODO,
     rastreo_dias: MODO==='rastreo' ? rastreoSel : null,
@@ -692,7 +690,7 @@ async function crear(){
   }catch(_){
     err.textContent = 'No se pudo crear la consulta. Revisa tu conexión.';
   }finally{
-    btn.disabled = false; btn.textContent = '✅ Activar por WhatsApp';
+    btn.disabled = false; btn.textContent = '✅ Activar envío de alerta por WhatsApp';
   }
 }
 
