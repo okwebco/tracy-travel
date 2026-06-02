@@ -32,20 +32,24 @@ class TravelpayoutsProvider(Proveedor):
     async def buscar_vuelos(self, consulta) -> list[dict]:
         if not self.disponible:
             return []
+        # one_way: solo "Ida y regreso" es ida+vuelta; ida o regreso son un tramo.
+        ida_y_vuelta = getattr(consulta, "tipo_viaje", None) == "ida_regreso"
         params = {
             "origin": consulta.origen.upper(),
             "destination": consulta.destino.upper(),
             "currency": (consulta.moneda or "cop").lower(),
-            "one_way": "false" if consulta.fecha_regreso else "true",
+            "one_way": "false" if ida_y_vuelta else "true",
             "sorting": "price",
             "limit": 10,
             "token": config.TRAVELPAYOUTS_TOKEN,
         }
-        if consulta.fecha_salida:
-            params["departure_at"] = consulta.fecha_salida.strftime("%Y-%m")
+        # Para "Solo regreso" usamos la fecha de regreso como fecha del tramo.
+        fecha_tramo = consulta.fecha_salida or consulta.fecha_regreso
+        if fecha_tramo:
+            params["departure_at"] = fecha_tramo.strftime("%Y-%m")
 
         try:
-            async with httpx.AsyncClient(timeout=20.0) as client:
+            async with httpx.AsyncClient(timeout=20.0, follow_redirects=True, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"}) as client:
                 r = await client.get(API_URL, params=params)
                 data = r.json()
         except Exception as e:

@@ -23,11 +23,15 @@ class Consulta(Base):
     __tablename__ = "tracy_consultas"
 
     id = Column(Integer, primary_key=True, index=True)
+    nombre = Column(String(60), nullable=False)          # nombre de la persona
+    apellido = Column(String(60), nullable=False)        # apellido de la persona
     whatsapp = Column(String(20), nullable=False)        # 57XXXXXXXXXX
     origen = Column(String(3), nullable=False)           # IATA
     destino = Column(String(3), nullable=False)          # IATA
     macro = Column(String(12), nullable=False)           # vuelo | hospedaje | ambos
     motivo = Column(String(12), nullable=False)          # turismo | negocios | familiar | otros
+    # Tipo de viaje: ida | regreso | ida_regreso
+    tipo_viaje = Column(String(12), nullable=False, default="ida_regreso")
 
     fecha_salida = Column(Date, nullable=True)
     fecha_regreso = Column(Date, nullable=True)

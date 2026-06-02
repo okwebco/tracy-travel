@@ -85,6 +85,9 @@ def _render(payload: dict, creado: datetime) -> str:
     moneda = payload.get("moneda", "COP")
     o = _esc(payload.get("origen_nombre") or payload.get("origen"))
     d = _esc(payload.get("destino_nombre") or payload.get("destino"))
+    nombre_completo = _esc((str(payload.get("nombre") or "") + " " + str(payload.get("apellido") or "")).strip())
+    tipo_viaje_lbl = {"ida": "Solo ida", "regreso": "Solo regreso", "ida_regreso": "Ida y regreso"}.get(
+        payload.get("tipo_viaje") or "ida_regreso", "Ida y regreso")
     vuelos = payload.get("vuelos") or []
     hoteles = payload.get("hoteles") or []
 
@@ -129,13 +132,18 @@ h3{{margin:22px 0 10px;border-bottom:1px solid #334155;padding-bottom:6px}}
 .btn{{display:inline-block;background:#38bdf8;color:#06283b;text-decoration:none;
 font-weight:600;border-radius:8px;padding:8px 14px;margin-right:8px;font-size:14px}}
 .btn.alt{{background:#334155;color:#e2e8f0}}
+.hola{{color:#e2e8f0;font-size:15px;margin:2px 0 4px}}
+.tipo{{color:#94a3b8;font-size:13px}}
 footer{{margin-top:26px;color:#64748b;font-size:12px;text-align:center;line-height:1.6}}
+footer a.creditos{{color:#3b82f6;text-decoration:underline}}
 </style></head>
 <body><div class="wrap">
 <header>
   <div style="font-size:40px">🕵️</div>
   <h1>Tracy Travel</h1>
+  {f'<div class="hola">¡Hola {nombre_completo}!</div>' if nombre_completo else ''}
   <div class="ruta">{o} → {d}</div>
+  <div class="tipo">{tipo_viaje_lbl}</div>
   <div class="frase">{frase}</div>
 </header>
 {temp_html}
@@ -145,6 +153,7 @@ footer{{margin-top:26px;color:#64748b;font-size:12px;text-align:center;line-heig
   <div>{disclaimer}</div>
   <div>{afiliados}</div>
   <div>Reporte generado {_esc(creado.strftime('%Y-%m-%d %H:%M'))} UTC · se borra a las 48 h.</div>
+  <div><a class="creditos" href="http://okweb.co/jhoveloro/tracy-travel" target="_blank" rel="noopener nofollow">Tracy Travel | Crea Ok Web ® | 2026</a></div>
 </footer>
 </div></body></html>"""
 

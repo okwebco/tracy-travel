@@ -11,6 +11,7 @@ from app.tracy.modos import (
 MACROS = {"vuelo", "hospedaje", "ambos"}
 MOTIVOS = {"turismo", "negocios", "familiar", "otros"}
 MONEDAS = {"COP", "USD", "EUR"}
+TIPOS_VIAJE = {"ida", "regreso", "ida_regreso"}
 
 
 class AccesoRequest(BaseModel):
@@ -36,11 +37,14 @@ class PrecheckResponse(BaseModel):
 
 class ConsultaCreate(BaseModel):
     clave: str                       # LANDING_PASSWORD
+    nombre: str
+    apellido: str
     whatsapp: str
     origen: str
     destino: str
     macro: str
     motivo: str = "turismo"
+    tipo_viaje: str = "ida_regreso"
     fecha_salida: Optional[date] = None
     fecha_regreso: Optional[date] = None
     flexible: bool = False
@@ -54,6 +58,14 @@ class ConsultaCreate(BaseModel):
     # Seguimiento: cantidad de rastreos (2..6) y frecuencia en días.
     seguimiento_cantidad: Optional[int] = None
     seguimiento_frecuencia: Optional[int] = None
+
+    @field_validator("nombre", "apellido")
+    @classmethod
+    def _nombre_apellido(cls, v: str) -> str:
+        v = (v or "").strip()
+        if len(v) < 2:
+            raise ValueError("Nombre y apellido son obligatorios")
+        return v
 
     @field_validator("whatsapp")
     @classmethod
@@ -83,6 +95,14 @@ class ConsultaCreate(BaseModel):
         v = (v or "turismo").strip().lower()
         if v not in MOTIVOS:
             raise ValueError(f"motivo debe ser uno de {MOTIVOS}")
+        return v
+
+    @field_validator("tipo_viaje")
+    @classmethod
+    def _tipo_viaje(cls, v: str) -> str:
+        v = (v or "ida_regreso").strip().lower()
+        if v not in TIPOS_VIAJE:
+            raise ValueError(f"tipo_viaje debe ser uno de {TIPOS_VIAJE}")
         return v
 
     @field_validator("modo")

@@ -22,7 +22,7 @@ async def send_whatsapp(phone: str, message: str) -> dict:
     payload = {"chatId": f"{phone}@c.us", "message": message}
 
     try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
+        async with httpx.AsyncClient(timeout=10.0, follow_redirects=True, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"}) as client:
             r = await client.post(url, json=payload)
             return r.json()
     except Exception as e:

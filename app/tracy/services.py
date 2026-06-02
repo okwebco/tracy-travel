@@ -5,6 +5,16 @@ from datetime import datetime
 
 from app.tracy import catalogo, temporadas, config, modos as modos_mod
 
+TIPO_VIAJE_LABEL = {
+    "ida": "Solo ida",
+    "regreso": "Solo regreso",
+    "ida_regreso": "Ida y regreso",
+}
+
+
+def tipo_viaje_label(tipo: str | None) -> str:
+    return TIPO_VIAJE_LABEL.get(tipo or "ida_regreso", "Ida y regreso")
+
 
 def _fmt_precio(valor: float | None, moneda: str) -> str:
     if valor is None:
@@ -69,12 +79,15 @@ def construir_payload(consulta, vuelos: list[dict], hoteles: list[dict],
 
     ahora = datetime.utcnow()
     return {
+        "nombre": consulta.nombre,
+        "apellido": consulta.apellido,
         "origen": consulta.origen,
         "origen_nombre": catalogo.nombre(consulta.origen),
         "destino": consulta.destino,
         "destino_nombre": catalogo.nombre(consulta.destino),
         "macro": consulta.macro,
         "motivo": consulta.motivo,
+        "tipo_viaje": consulta.tipo_viaje,
         "moneda": moneda,
         "noches": consulta.noches,
         "fecha_salida": consulta.fecha_salida.isoformat() if consulta.fecha_salida else None,
@@ -97,7 +110,9 @@ def mensaje_whatsapp_resumen(payload: dict, numero: str, cierre: bool = False,
     moneda = payload.get("moneda", "COP")
     o = payload.get("origen_nombre", payload.get("origen"))
     d = payload.get("destino_nombre", payload.get("destino"))
-    lineas = [f"🕵️ Tracy Travel — {o} → {d}"]
+    nombre = (payload.get("nombre") or "").strip()
+    saludo = f"🕵️ Hola {nombre}, soy Tracy Travel — {o} → {d}" if nombre else f"🕵️ Tracy Travel — {o} → {d}"
+    lineas = [saludo]
 
     vuelos = payload.get("vuelos") or []
     hoteles = payload.get("hoteles") or []
@@ -136,8 +151,10 @@ def mensaje_bienvenida(consulta) -> str:
     o = catalogo.nombre(consulta.origen)
     d = catalogo.nombre(consulta.destino)
     resumen = modos_mod.resumen_entregas(consulta)
+    nombre = (consulta.nombre or "").strip()
+    saludo = f"🕵️ ¡Hola {nombre}! Soy Tracy Travel." if nombre else "🕵️ ¡Hola! Soy Tracy Travel."
     return (
-        f"🕵️ ¡Hola! Soy Tracy Travel. Activé tu consulta {o} → {d}.\n"
+        f"{saludo} Activé tu consulta {o} → {d}.\n"
         f"{resumen}\n"
         f"Te envío ya tu primer reporte. 👇\n\n"
         f"🔒 Nunca te pediremos dinero ni datos bancarios.\n"

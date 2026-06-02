@@ -30,7 +30,7 @@ class AmadeusProvider(Proveedor):
             "client_secret": config.AMADEUS_CLIENT_SECRET,
         }
         try:
-            async with httpx.AsyncClient(timeout=20.0) as client:
+            async with httpx.AsyncClient(timeout=20.0, follow_redirects=True, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"}) as client:
                 r = await client.post(url, data=datos,
                                       headers={"Content-Type": "application/x-www-form-urlencoded"})
                 payload = r.json()
@@ -67,7 +67,7 @@ class AmadeusProvider(Proveedor):
             params["returnDate"] = consulta.fecha_regreso.isoformat()
 
         try:
-            async with httpx.AsyncClient(timeout=25.0) as client:
+            async with httpx.AsyncClient(timeout=25.0, follow_redirects=True, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"}) as client:
                 r = await client.get(url, params=params,
                                      headers={"Authorization": f"Bearer {token}"})
                 data = r.json()
@@ -119,7 +119,7 @@ class AmadeusProvider(Proveedor):
 
         ciudad = catalogo.nombre(consulta.destino)
         try:
-            async with httpx.AsyncClient(timeout=25.0) as client:
+            async with httpx.AsyncClient(timeout=25.0, follow_redirects=True, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"}) as client:
                 r = await client.get(url, params=params,
                                      headers={"Authorization": f"Bearer {token}"})
                 data = r.json()

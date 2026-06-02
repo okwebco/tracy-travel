@@ -31,11 +31,13 @@ async def acceso(req: AccesoRequest):
 async def obtener_catalogo():
     """Catálogo agrupado país → aeropuertos para los selectores dependientes.
 
-    Origen = Colombia (sus aeropuertos). Destino = país → aeropuertos.
+    Origen y destino comparten EL MISMO listado completo (Colombia + destinos).
+    Cada país incluye su código ISO y bandera emoji.
     """
+    cat = catalogo.catalogo_por_pais()
     return {
-        "origenes": catalogo.origenes_por_pais(),
-        "destinos": catalogo.destinos_por_pais(),
+        "origenes": cat,
+        "destinos": cat,
     }
 
 
@@ -54,11 +56,24 @@ async def crear_consulta(req: ConsultaCreate, db: Session = Depends(get_db)):
     if req.clave != config.LANDING_PASSWORD:
         raise HTTPException(status_code=401, detail="Clave incorrecta")
 
-    # Validar catálogo
+    # Validar catálogo (origen y destino usan el mismo listado completo)
     if not catalogo.es_origen_valido(req.origen):
-        raise HTTPException(status_code=400, detail="Origen no válido (debe ser un aeropuerto de Colombia)")
+        raise HTTPException(status_code=400, detail="Origen no está en el catálogo")
     if not catalogo.es_destino_valido(req.destino):
         raise HTTPException(status_code=400, detail="Destino no está en el catálogo")
+    if req.origen == req.destino:
+        raise HTTPException(status_code=400, detail="Origen y destino no pueden ser iguales")
+
+    # Normalizar fechas según el tipo de viaje:
+    #  - ida          -> solo fecha de salida (one_way en la búsqueda)
+    #  - regreso       -> solo fecha de regreso (one_way en la búsqueda)
+    #  - ida_regreso   -> ambas (ida y vuelta)
+    fecha_salida = req.fecha_salida
+    fecha_regreso = req.fecha_regreso
+    if req.tipo_viaje == "ida":
+        fecha_regreso = None
+    elif req.tipo_viaje == "regreso":
+        fecha_salida = None
 
     # Reglas por modo (ADENDA v2)
     rastreo_dias_csv = None
@@ -100,13 +115,16 @@ async def crear_consulta(req: ConsultaCreate, db: Session = Depends(get_db)):
     codigo = secrets.token_hex(3).upper()  # 6 chars
 
     consulta = Consulta(
+        nombre=req.nombre,
+        apellido=req.apellido,
         whatsapp=req.whatsapp,
         origen=req.origen,
         destino=req.destino,
         macro=req.macro,
         motivo=req.motivo,
-        fecha_salida=req.fecha_salida,
-        fecha_regreso=req.fecha_regreso,
+        tipo_viaje=req.tipo_viaje,
+        fecha_salida=fecha_salida,
+        fecha_regreso=fecha_regreso,
         flexible=req.flexible,
         noches=req.noches,
         hotel_precio_min=req.hotel_precio_min,

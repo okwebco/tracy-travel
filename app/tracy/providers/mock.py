@@ -32,8 +32,11 @@ class MockProvider(Proveedor):
         moneda = (consulta.moneda or "COP").upper()
         base = 900_000 if moneda == "COP" else 280.0
         rnd = _semilla(consulta)
-        salida = _fecha_str(consulta.fecha_salida) or "2026-07-15"
-        regreso = _fecha_str(consulta.fecha_regreso)
+        # "Solo regreso" no tiene salida: usamos la fecha disponible como tramo.
+        salida = _fecha_str(consulta.fecha_salida) or _fecha_str(consulta.fecha_regreso) or "2026-07-15"
+        # En ida+vuelta mostramos también el regreso.
+        ida_y_vuelta = getattr(consulta, "tipo_viaje", None) == "ida_regreso"
+        regreso = _fecha_str(consulta.fecha_regreso) if ida_y_vuelta else None
         ofertas = []
         for _ in range(5):
             factor = 1 + rnd.uniform(-0.25, 0.7)

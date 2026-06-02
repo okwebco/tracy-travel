@@ -50,7 +50,7 @@ class HotellookProvider(Proveedor):
             params["checkOut"] = check_out
 
         try:
-            async with httpx.AsyncClient(timeout=20.0) as client:
+            async with httpx.AsyncClient(timeout=20.0, follow_redirects=True, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"}) as client:
                 r = await client.get(CACHE_URL, params=params)
                 data = r.json()
         except Exception as e:
