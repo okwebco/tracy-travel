@@ -129,19 +129,22 @@ def _escalas_n(v: dict) -> int:
         return 0
 
 
-def _bloque_tramo_wa(titulo_etiqueta: str, vuelos: list, moneda: str,
-                     etiqueta_sin_vuelos: str) -> list[str]:
-    """Genera las líneas de un tramo para el mensaje de WhatsApp.
+def _bloque_tramo_wa(ruta: str, titulo_etiqueta: str, vuelos: list, moneda: str,
+                     frase: str, etiqueta_sin_vuelos: str) -> list[str]:
+    """Genera las líneas de un tramo (bloque independiente) para WhatsApp.
 
-    titulo_etiqueta: 'IDA' o 'VUELTA'.
-    etiqueta_sin_vuelos: 'la ida' / 'la vuelta'.
+    ruta: 'Pereira → São Luís'.
+    titulo_etiqueta: 'IDA' o 'REGRESO'.
+    frase: recomendación (se muestra junto al destino si hay vuelos).
+    etiqueta_sin_vuelos: 'la ida' / 'el regreso'.
     """
     if not vuelos:
-        return [f"No encontramos vuelos para {etiqueta_sin_vuelos} en estas fechas."]
+        return [f"{ruta}: No encontramos vuelos para {etiqueta_sin_vuelos} en estas fechas."]
     v = vuelos[0]
     aero = (v.get("aerolinea") or "").strip()
     fecha = _fmt_fecha_wa(v.get("fecha_salida"))
     return [
+        f"{ruta}: 👉 *{frase}*",  # *…* = negrita en WhatsApp
         f"{titulo_etiqueta} por {aero} desde {_fmt_precio(v.get('precio'), moneda)}",
         f"→ {fecha}",
         f"Escala(s): {_escalas_n(v)}",
@@ -154,29 +157,32 @@ def mensaje_whatsapp_resumen(payload: dict, numero: str, cierre: bool = False,
     moneda = payload.get("moneda", "COP")
     o = payload.get("origen_nombre", payload.get("origen"))
     d = payload.get("destino_nombre", payload.get("destino"))
+    frase = payload.get("frase", "")
     nombre = (payload.get("nombre") or "").strip()
 
     saludo = (f"Hola {nombre}, soy Tracy 🕵️ Travel ✈️" if nombre
               else "Hola, soy Tracy 🕵️ Travel ✈️")
-    lineas = [saludo, f"{o} → {d}", ""]
+    lineas = [saludo, "", "Tu investigación de vuelo:", ""]
 
     # Bloque IDA
-    lineas += _bloque_tramo_wa("IDA", payload.get("vuelos_ida") or [], moneda, "la ida")
+    lineas += _bloque_tramo_wa(f"{o} → {d}", "IDA",
+                               payload.get("vuelos_ida") or [], moneda, frase, "la ida")
 
-    # Bloque VUELTA (solo si hay tramo)
+    # Bloque REGRESO (solo si hay tramo)
     if payload.get("tiene_vuelta"):
+        ov = payload.get("origen_vuelta_nombre", payload.get("origen_vuelta"))
+        dv = payload.get("destino_vuelta_nombre", payload.get("destino_vuelta"))
         lineas.append("")
-        lineas += _bloque_tramo_wa("REGRESO", payload.get("vuelos_vuelta") or [], moneda, "el regreso")
+        lineas += _bloque_tramo_wa(f"{ov} → {dv}", "REGRESO",
+                                   payload.get("vuelos_vuelta") or [], moneda, frase, "el regreso")
 
-    lineas.append("")
-    lineas.append(f"👉 *{payload.get('frase','')}*")  # *…* = negrita en WhatsApp
     lineas.append("")
     lineas.append(f"Ver detalle en {config.PUBLIC_BASE_URL}/{numero}")
-    lineas.append("(Disponible 48 horas)")
+    lineas.append("~Se autodestruye en 48 horas~")  # ~…~ = tachado en WhatsApp
 
     if cierre:
         lineas.append("")
-        lineas.append("Gracias por usar")
+        lineas.append("Gracias por investigar con")
         lineas.append("Tracy 🕵️ Travel ✈️")
         lineas.append("tracy.okweb.co")
     else:
