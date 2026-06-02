@@ -43,10 +43,10 @@ async def obtener_catalogo():
 
 @router.post("/precheck", response_model=PrecheckResponse)
 async def precheck(req: PrecheckRequest):
-    """Evalúa temporada/fiestas para destino + fechas (se muestra antes de confirmar)."""
+    """Evalúa temporada/fiestas para destino + fecha (se muestra antes de confirmar)."""
     if not catalogo.es_destino_valido(req.destino):
         raise HTTPException(status_code=400, detail="Destino no está en el catálogo")
-    resultado = temporadas.evaluar(req.destino.upper(), req.fecha_salida, req.fecha_regreso)
+    resultado = temporadas.evaluar(req.destino.upper(), req.fecha_salida, None)
     return resultado
 
 
@@ -56,7 +56,7 @@ async def crear_consulta(req: ConsultaCreate, db: Session = Depends(get_db)):
     if req.clave != config.LANDING_PASSWORD:
         raise HTTPException(status_code=401, detail="Clave incorrecta")
 
-    # Validar catálogo (origen y destino usan el mismo listado completo)
+    # Validar catálogo del tramo IDA (origen y destino usan el mismo listado completo)
     if not catalogo.es_origen_valido(req.origen):
         raise HTTPException(status_code=400, detail="Origen no está en el catálogo")
     if not catalogo.es_destino_valido(req.destino):
@@ -64,16 +64,14 @@ async def crear_consulta(req: ConsultaCreate, db: Session = Depends(get_db)):
     if req.origen == req.destino:
         raise HTTPException(status_code=400, detail="Origen y destino no pueden ser iguales")
 
-    # Normalizar fechas según el tipo de viaje:
-    #  - ida          -> solo fecha de salida (one_way en la búsqueda)
-    #  - regreso       -> solo fecha de regreso (one_way en la búsqueda)
-    #  - ida_regreso   -> ambas (ida y vuelta)
-    fecha_salida = req.fecha_salida
-    fecha_regreso = req.fecha_regreso
-    if req.tipo_viaje == "ida":
-        fecha_regreso = None
-    elif req.tipo_viaje == "regreso":
-        fecha_salida = None
+    # Tramo VUELTA (opcional). El schema garantiza que vengan los tres campos
+    # juntos y que origen_vuelta != destino_vuelta. Aquí validamos el catálogo.
+    hay_vuelta = bool(req.origen_vuelta and req.destino_vuelta)
+    if hay_vuelta:
+        if not catalogo.es_origen_valido(req.origen_vuelta):
+            raise HTTPException(status_code=400, detail="Origen de vuelta no está en el catálogo")
+        if not catalogo.es_destino_valido(req.destino_vuelta):
+            raise HTTPException(status_code=400, detail="Destino de vuelta no está en el catálogo")
 
     # Reglas por modo (ADENDA v2)
     rastreo_dias_csv = None
@@ -116,10 +114,11 @@ async def crear_consulta(req: ConsultaCreate, db: Session = Depends(get_db)):
         whatsapp=req.whatsapp,
         origen=req.origen,
         destino=req.destino,
+        fecha_salida=req.fecha_salida,
         motivo=req.motivo,
-        tipo_viaje=req.tipo_viaje,
-        fecha_salida=fecha_salida,
-        fecha_regreso=fecha_regreso,
+        origen_vuelta=req.origen_vuelta if hay_vuelta else None,
+        destino_vuelta=req.destino_vuelta if hay_vuelta else None,
+        fecha_vuelta=req.fecha_vuelta if hay_vuelta else None,
         flexible=req.flexible,
         moneda=(req.moneda or config.MONEDA_DEFECTO).upper(),
         modo=req.modo,

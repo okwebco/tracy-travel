@@ -96,34 +96,42 @@ Inicia una nueva consulta cuando quieras.</p></div></body></html>"""
     return HTMLResponse(html, status_code=404, headers=_NOINDEX_HEADERS)
 
 
-def _tarjeta_vuelo(v: dict, moneda: str, origen: str, destino: str, tipo_viaje: str) -> str:
+def _tarjeta_vuelo(v: dict, moneda: str, origen: str, destino: str, fecha_tramo) -> str:
+    """Tarjeta de un vuelo one-way de un tramo.
+
+    Muestra: precio, aerolínea (fila propia), fecha 'YYYY-MM-DD HH:MM' y
+    'Escala(s): N' en su propia línea. El botón enlaza a Google Flights del
+    tramo (origen/destino/fecha de ESE tramo).
+    """
     aero = _esc(v.get("aerolinea") or "")
     escalas = v.get("escalas")
-    escalas_txt = "Directo" if escalas == 0 else (f"{escalas} escala(s)" if escalas else "")
-    salida = _esc(_fmt_fecha(v.get("fecha_salida")))
-    regreso = _esc(_fmt_fecha(v.get("fecha_regreso")))
+    try:
+        escalas_n = int(escalas)
+    except (TypeError, ValueError):
+        escalas_n = 0
+    fecha = _esc(_fmt_fecha(v.get("fecha_salida")) or _fmt_fecha(fecha_tramo))
 
-    def _con_escalas(txt: str) -> str:
-        return f"{txt} · {escalas_txt}" if escalas_txt else txt
-
-    if tipo_viaje == "ida":
-        filas = f'<div>→ Ida: {_con_escalas(salida)}</div>'
-    elif tipo_viaje == "regreso":
-        ref = regreso or salida
-        filas = f'<div>→ Regreso: {_con_escalas(ref)}</div>'
-    else:  # ida_regreso
-        filas = f'<div>→ Ida:&nbsp;&nbsp;&nbsp;{salida}</div>'
-        if regreso:
-            filas += f'<div>→ Vuelta: {_con_escalas(regreso)}</div>'
-        elif escalas_txt:
-            filas = f'<div>→ Ida:&nbsp;&nbsp;&nbsp;{_con_escalas(salida)}</div>'
-
-    enlace = _esc(_google_flights_url(origen, destino, v.get("fecha_salida")))
+    enlace = _esc(_google_flights_url(origen, destino, v.get("fecha_salida") or fecha_tramo))
     return f"""<div class="card">
       <div class="precio-row"><span class="precio">{_fmt_precio(v.get('precio'), moneda)}</span><a class="btn" href="{enlace}" target="_blank" rel="noopener nofollow">Ver vuelo</a></div>
       <div class="aero">{aero}</div>
-      <div class="meta">{filas}</div>
+      <div class="meta">
+        <div>{fecha}</div>
+        <div>Escala(s): {escalas_n}</div>
+      </div>
     </div>"""
+
+
+def _bloque_tramo(etiqueta: str, vuelos: list, moneda: str,
+                  origen: str, destino: str, fecha_tramo, sin_vuelos: str) -> str:
+    """Bloque titulado de un tramo: '{etiqueta} por {Aerolínea} desde {precio}'."""
+    if not vuelos:
+        return f'<div class="aviso">✈️ No encontramos vuelos para {_esc(sin_vuelos)} en estas fechas.</div>'
+    mejor = vuelos[0]
+    aero = _esc(mejor.get("aerolinea") or "")
+    titulo = f"{_esc(etiqueta)} por {aero} desde {_fmt_precio(mejor.get('precio'), moneda)}"
+    tarjetas = "".join(_tarjeta_vuelo(v, moneda, origen, destino, fecha_tramo) for v in vuelos)
+    return f'<h3 class="tramo">{titulo}</h3>{tarjetas}'
 
 
 def _render(payload: dict, creado: datetime) -> str:
@@ -131,22 +139,22 @@ def _render(payload: dict, creado: datetime) -> str:
     o = _esc(payload.get("origen_nombre") or payload.get("origen"))
     d = _esc(payload.get("destino_nombre") or payload.get("destino"))
     nombre_completo = _esc((str(payload.get("nombre") or "") + " " + str(payload.get("apellido") or "")).strip())
-    tipo_viaje_lbl = {"ida": "Solo ida", "regreso": "Solo regreso", "ida_regreso": "Ida y regreso"}.get(
-        payload.get("tipo_viaje") or "ida_regreso", "Ida y regreso")
-    vuelos = payload.get("vuelos") or []
 
     origen_iata = payload.get("origen") or ""
     destino_iata = payload.get("destino") or ""
-    tipo_viaje = payload.get("tipo_viaje") or "ida_regreso"
 
     bloques = []
-    if vuelos:
-        bloques.append('<h3 class="top3">✈️ Top 3 vuelos</h3>'
-                       + "".join(_tarjeta_vuelo(v, moneda, origen_iata, destino_iata, tipo_viaje)
-                                 for v in vuelos))
-    else:
-        bloques.append('<div class="aviso">✈️ No encontramos vuelos para estas fechas en este momento. '
-                       'Prueba con otras fechas o inicia otra consulta.</div>')
+    # Bloque IDA (siempre)
+    bloques.append(_bloque_tramo(
+        "IDA", payload.get("vuelos_ida") or [], moneda,
+        origen_iata, destino_iata, payload.get("fecha_salida"), "la ida"))
+
+    # Bloque VUELTA (opcional)
+    if payload.get("tiene_vuelta"):
+        bloques.append(_bloque_tramo(
+            "VUELTA", payload.get("vuelos_vuelta") or [], moneda,
+            payload.get("origen_vuelta") or "", payload.get("destino_vuelta") or "",
+            payload.get("fecha_vuelta"), "la vuelta"))
 
     temporada = payload.get("temporada") or {}
     temp_html = ""
@@ -155,6 +163,12 @@ def _render(payload: dict, creado: datetime) -> str:
 
     frase = _esc(payload.get("frase") or "")
     disclaimer = _esc(payload.get("disclaimer") or "")
+
+    ruta_html = f'<div class="ruta">{o} → {d}</div>'
+    if payload.get("tiene_vuelta"):
+        ov = _esc(payload.get("origen_vuelta_nombre") or payload.get("origen_vuelta") or "")
+        dv = _esc(payload.get("destino_vuelta_nombre") or payload.get("destino_vuelta") or "")
+        ruta_html += f'<div class="ruta">Vuelta: {ov} → {dv}</div>'
 
     return f"""<!doctype html><html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -171,15 +185,14 @@ h1{{font-size:22px;margin:6px 0}}
 border-radius:999px;padding:10px 22px;margin:12px 0;font-size:20px;letter-spacing:.3px}}
 .aviso{{background:#1e293b;border-left:4px solid #f59e0b;padding:12px;border-radius:8px;margin:14px 0;font-size:15px}}
 h3{{margin:22px 0 10px;border-bottom:1px solid #334155;padding-bottom:6px}}
-h3.top3{{text-align:center}}
+h3.tramo{{color:#38bdf8;font-size:18px}}
 .card{{background:#1e293b;border-radius:12px;padding:14px;margin:10px 0}}
 .precio{{font-size:22px;font-weight:700;color:#38bdf8}}
 .precio-row{{display:flex;align-items:center;justify-content:space-between;gap:10px}}
 .aero{{font-weight:600;color:#e2e8f0;margin:6px 0 2px}}
 .btn{{display:inline-block;background:#38bdf8;color:#06283b;text-decoration:none;font-weight:700;border-radius:8px;padding:8px 14px;font-size:13px;white-space:nowrap}}
 .meta{{color:#cbd5e1;margin:4px 0 0;font-size:14px;line-height:1.5}}
-.hola{{color:#22d3ee;font-size:18px;font-weight:700;margin:8px 0}}
-.tipo{{color:#94a3b8;font-size:13px}}
+.hola{{color:#22d3ee;font-size:22px;font-weight:800;margin:8px 0}}
 footer{{margin-top:26px;color:#64748b;font-size:12px;text-align:center;line-height:1.6}}
 footer a.creditos{{color:#3b82f6;text-decoration:underline}}
 </style></head>
@@ -188,8 +201,7 @@ footer a.creditos{{color:#3b82f6;text-decoration:underline}}
   <div style="font-size:40px">🕵️</div>
   <h1>Tracy Travel</h1>
   {f'<div class="hola">¡Hola {nombre_completo}!</div>' if nombre_completo else ''}
-  <div class="ruta">{o} → {d}</div>
-  <div class="tipo">{tipo_viaje_lbl}</div>
+  {ruta_html}
   <div class="frase">{frase}</div>
 </header>
 {temp_html}

@@ -29,22 +29,20 @@ class TravelpayoutsProvider(Proveedor):
     def disponible(self) -> bool:
         return bool(config.TRAVELPAYOUTS_TOKEN)
 
-    async def buscar_vuelos(self, consulta) -> list[dict]:
+    async def buscar_vuelos(self, tramo) -> list[dict]:
         if not self.disponible:
             return []
-        # one_way: solo "Ida y regreso" es ida+vuelta; ida o regreso son un tramo.
-        ida_y_vuelta = getattr(consulta, "tipo_viaje", None) == "ida_regreso"
+        # Cada búsqueda es un tramo one-way (origen → destino + fecha).
         params = {
-            "origin": consulta.origen.upper(),
-            "destination": consulta.destino.upper(),
-            "currency": (consulta.moneda or "cop").lower(),
-            "one_way": "false" if ida_y_vuelta else "true",
+            "origin": tramo.origen.upper(),
+            "destination": tramo.destino.upper(),
+            "currency": (tramo.moneda or "cop").lower(),
+            "one_way": "true",
             "sorting": "price",
             "limit": 10,
             "token": config.TRAVELPAYOUTS_TOKEN,
         }
-        # Para "Solo regreso" usamos la fecha de regreso como fecha del tramo.
-        fecha_tramo = consulta.fecha_salida or consulta.fecha_regreso
+        fecha_tramo = tramo.fecha_salida
         if fecha_tramo:
             params["departure_at"] = fecha_tramo.strftime("%Y-%m")
 
@@ -53,14 +51,14 @@ class TravelpayoutsProvider(Proveedor):
                 r = await client.get(API_URL, params=params)
                 data = r.json()
         except Exception as e:
-            print(f"[Tracy/Travelpayouts] Error ({consulta.origen}->{consulta.destino}): {e}")
+            print(f"[Tracy/Travelpayouts] Error ({tramo.origen}->{tramo.destino}): {e}")
             return []
 
         if not data.get("success"):
             print(f"[Tracy/Travelpayouts] Respuesta sin éxito: {data}")
             return []
 
-        moneda = (consulta.moneda or "COP").upper()
+        moneda = (tramo.moneda or "COP").upper()
         ofertas = []
         for item in data.get("data", []):
             if not item.get("price"):

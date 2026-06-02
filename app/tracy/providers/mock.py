@@ -14,8 +14,8 @@ from app.tracy import catalogo
 AEROLINEAS = ["AV", "LA", "G3", "CM", "P5"]
 
 
-def _semilla(consulta) -> random.Random:
-    base = f"{consulta.origen}{consulta.destino}{consulta.fecha_salida or ''}{date.today().isoformat()}"
+def _semilla(tramo) -> random.Random:
+    base = f"{tramo.origen}{tramo.destino}{tramo.fecha_salida or ''}{date.today().isoformat()}"
     return random.Random(base)
 
 
@@ -27,15 +27,12 @@ class MockProvider(Proveedor):
     nombre = "mock"
     disponible = True
 
-    async def buscar_vuelos(self, consulta) -> list[dict]:
-        moneda = (consulta.moneda or "COP").upper()
+    async def buscar_vuelos(self, tramo) -> list[dict]:
+        # Cada búsqueda es un tramo one-way (origen → destino + fecha).
+        moneda = (tramo.moneda or "COP").upper()
         base = 900_000 if moneda == "COP" else 280.0
-        rnd = _semilla(consulta)
-        # "Solo regreso" no tiene salida: usamos la fecha disponible como tramo.
-        salida = _fecha_str(consulta.fecha_salida) or _fecha_str(consulta.fecha_regreso) or "2026-07-15"
-        # En ida+vuelta mostramos también el regreso.
-        ida_y_vuelta = getattr(consulta, "tipo_viaje", None) == "ida_regreso"
-        regreso = _fecha_str(consulta.fecha_regreso) if ida_y_vuelta else None
+        rnd = _semilla(tramo)
+        salida = _fecha_str(tramo.fecha_salida) or "2026-07-15"
         ofertas = []
         for _ in range(5):
             factor = 1 + rnd.uniform(-0.25, 0.7)
@@ -44,9 +41,9 @@ class MockProvider(Proveedor):
                 "moneda": moneda,
                 "aerolinea": catalogo.nombre_aerolinea(rnd.choice(AEROLINEAS)),
                 "fecha_salida": salida,
-                "fecha_regreso": regreso,
+                "fecha_regreso": None,
                 "escalas": rnd.choice([0, 0, 1, 2]),
-                "link": f"https://www.aviasales.com/search/{consulta.origen}{consulta.destino}",
+                "link": f"https://www.aviasales.com/search/{tramo.origen}{tramo.destino}",
                 "proveedor": self.nombre,
             })
         return ofertas

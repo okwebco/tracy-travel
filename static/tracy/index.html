@@ -84,6 +84,27 @@ padding:6px 10px;cursor:pointer;font-size:13px;background:#0f172a;white-space:no
 .iti__dial-code{color:#94a3b8}
 .iti--inline-dropdown .iti__dropdown-content{background:#1e293b}
 .iti__search-input{background:#0f172a;color:#e2e8f0;border-color:#334155}
+/* Tramos */
+.tramo-titulo{font-weight:800;font-size:16px;color:#38bdf8;margin:18px 0 6px;display:flex;align-items:center;justify-content:space-between}
+.quitar{width:auto;margin:0;padding:4px 10px;font-size:12px;background:#334155;color:#e2e8f0;border-radius:8px}
+#btn-vuela{margin-top:10px}
+/* Selector de país personalizado con bandera (imagen) */
+.pais-picker{position:relative}
+.pp-btn{display:flex;align-items:center;gap:8px;width:100%;padding:12px;border-radius:10px;
+border:1px solid #334155;background:#0f172a;color:#e2e8f0;font-size:16px;cursor:pointer;text-align:left}
+.pp-btn.bad{border-color:#f87171}
+.pp-btn img{width:24px;height:18px;border-radius:2px;object-fit:cover;flex:0 0 auto}
+.pp-btn .pp-label{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pp-btn .pp-ph{color:#94a3b8}
+.pp-caret{color:#94a3b8;font-size:12px}
+.pp-panel{position:absolute;z-index:50;left:0;right:0;top:calc(100% + 4px);background:#1e293b;
+border:1px solid #334155;border-radius:10px;max-height:280px;overflow:auto;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.pp-search{position:sticky;top:0;background:#1e293b;padding:8px}
+.pp-search input{padding:8px;font-size:14px}
+.pp-opt{display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;font-size:15px}
+.pp-opt:hover,.pp-opt.hi{background:#0b2536}
+.pp-opt img{width:24px;height:18px;border-radius:2px;object-fit:cover;flex:0 0 auto}
+.pp-empty{padding:12px;color:#94a3b8;font-size:14px}
 </style>
 </head>
 <body>
@@ -130,11 +151,14 @@ padding:6px 10px;cursor:pointer;font-size:13px;background:#0f172a;white-space:no
     <input id="whatsapp" type="tel" inputmode="numeric" placeholder="300 111 2233" autocomplete="off">
     <div class="field-err" id="fe-whatsapp"></div>
 
-    <!-- Origen: país → ciudad (dependiente) -->
+    <!-- ===== Tramo IDA ===== -->
+    <div class="tramo-titulo">➡️ Ida</div>
+
+    <!-- Ida origen: país → ciudad (dependiente) -->
     <div class="row">
       <div>
-        <label for="origen_pais">País de origen</label>
-        <select id="origen_pais" onchange="poblarAeropuertos('origen')"></select>
+        <label>País de origen</label>
+        <div class="pais-picker" data-target="origen"></div>
       </div>
       <div>
         <label for="origen">Ciudad de origen</label>
@@ -143,11 +167,11 @@ padding:6px 10px;cursor:pointer;font-size:13px;background:#0f172a;white-space:no
     </div>
     <div class="field-err" id="fe-origen"></div>
 
-    <!-- Destino: país → ciudad (dependiente) -->
+    <!-- Ida destino: país → ciudad (dependiente) -->
     <div class="row">
       <div>
-        <label for="destino_pais">País de destino</label>
-        <select id="destino_pais" onchange="poblarAeropuertos('destino')"></select>
+        <label>País de destino</label>
+        <div class="pais-picker" data-target="destino"></div>
       </div>
       <div>
         <label for="destino">Ciudad de destino</label>
@@ -155,6 +179,50 @@ padding:6px 10px;cursor:pointer;font-size:13px;background:#0f172a;white-space:no
       </div>
     </div>
     <div class="field-err" id="fe-destino"></div>
+
+    <label for="fecha_salida">Fecha de salida (ida)</label>
+    <input type="date" id="fecha_salida" oninput="autoResumen()">
+    <div class="field-err" id="fe-fecha_salida"></div>
+
+    <!-- Revisar temporada -->
+    <button class="btn-alt" onclick="precheck()">📅 Revisar temporada</button>
+    <div id="aviso-temp" class="aviso hide"></div>
+
+    <!-- Botón para añadir tramo de vuelta -->
+    <button type="button" class="btn-alt" id="btn-vuela" onclick="toggleVuelta()">✈️ Vuela</button>
+
+    <!-- ===== Tramo VUELTA (opcional) ===== -->
+    <div id="seccion-vuelta" class="hide">
+      <div class="tramo-titulo">⬅️ Vuelta <button type="button" class="quitar" onclick="quitarVuelta()">✕ quitar</button></div>
+
+      <div class="row">
+        <div>
+          <label>País de origen</label>
+          <div class="pais-picker" data-target="origen_vuelta"></div>
+        </div>
+        <div>
+          <label for="origen_vuelta">Ciudad de origen</label>
+          <select id="origen_vuelta" disabled></select>
+        </div>
+      </div>
+      <div class="field-err" id="fe-origen_vuelta"></div>
+
+      <div class="row">
+        <div>
+          <label>País de destino</label>
+          <div class="pais-picker" data-target="destino_vuelta"></div>
+        </div>
+        <div>
+          <label for="destino_vuelta">Ciudad de destino</label>
+          <select id="destino_vuelta" disabled></select>
+        </div>
+      </div>
+      <div class="field-err" id="fe-destino_vuelta"></div>
+
+      <label for="fecha_vuelta">Fecha de vuelta</label>
+      <input type="date" id="fecha_vuelta" oninput="autoResumen()">
+      <div class="field-err" id="fe-fecha_vuelta"></div>
+    </div>
 
     <label>Motivo del viaje</label>
     <select id="motivo">
@@ -171,28 +239,7 @@ padding:6px 10px;cursor:pointer;font-size:13px;background:#0f172a;white-space:no
       <option value="EUR">EUR — Euro</option>
     </select>
 
-    <label for="tipo_viaje">Tipo de viaje</label>
-    <select id="tipo_viaje" onchange="toggleFechas()">
-      <option value="ida_regreso">🔁 Ida y regreso</option>
-      <option value="ida">➡️ Solo ida</option>
-      <option value="regreso">⬅️ Solo regreso</option>
-    </select>
-
-    <div class="row">
-      <div id="campo-salida">
-        <label for="fecha_salida">Fecha de salida</label>
-        <input type="date" id="fecha_salida">
-      </div>
-      <div id="campo-regreso">
-        <label for="fecha_regreso">Fecha de regreso</label>
-        <input type="date" id="fecha_regreso">
-      </div>
-    </div>
     <label style="font-weight:400"><input type="checkbox" id="flexible" style="width:auto"> Fechas flexibles</label>
-
-    <!-- Revisar temporada: inmediatamente después de las fechas -->
-    <button class="btn-alt" onclick="precheck()">📅 Revisar temporada</button>
-    <div id="aviso-temp" class="aviso hide"></div>
 
     <!-- Modo de consulta -->
     <label>Modo de consulta</label>
@@ -237,14 +284,14 @@ padding:6px 10px;cursor:pointer;font-size:13px;background:#0f172a;white-space:no
     <!-- Resumen dinámico de entregas -->
     <div id="resumen-entregas" class="resumen hide"></div>
 
-    <button onclick="revisarYConfirmar()" id="btn-crear">Revisar resumen</button>
     <div class="field-err err" id="err-form"></div>
 
-    <!-- Resumen antes de confirmar -->
-    <div id="confirmar" class="hide">
-      <div class="resumen" id="resumen-final"></div>
-      <button onclick="crear()" id="btn-confirmar">✅ Confirmar y activar</button>
-      <button class="btn-alt" onclick="editar()">✏️ Editar</button>
+    <!-- Auto-resumen: aparece solo cuando el formulario está completo/válido -->
+    <div id="auto-resumen" class="resumen hide"></div>
+
+    <!-- Activar: aparece junto al auto-resumen -->
+    <div id="activar" class="hide">
+      <button onclick="crear()" id="btn-confirmar">✅ Activar por WhatsApp</button>
     </div>
 
     <!-- Resultado: enlace de opt-in -->
@@ -331,21 +378,87 @@ async function entrar(){
   }
 }
 
-/* ---- Selectores país → aeropuerto (mismo listado en origen y destino) ---- */
-function llenarPaises(selId, grupos, ph){
-  const s = document.getElementById(selId);
-  s.innerHTML = '<option value="">'+ph+'</option>';
-  Object.keys(grupos).forEach(p=>{
-    const o = document.createElement('option'); o.value=p;
-    // Nombre limpio del país (los <select> nativos no renderizan banderas en Windows).
-    o.textContent = p;
-    s.appendChild(o);
-  });
+/* ---- Selector de país personalizado con bandera (imagen flagcdn) ----
+   Reutilizable para las 4 instancias (ida origen/destino, vuelta origen/destino).
+   Guarda el país elegido en un campo oculto `{target}_pais` y dispara
+   poblarAeropuertos(target) para llenar el <select> de ciudad/aeropuerto. */
+const PAIS_VALOR = {};   // {target: nombrePais}
+
+function _flagImg(iso, alt){
+  const code = (iso||'').toLowerCase();
+  if(!code) return '';
+  // Degradación: si la imagen no carga, se oculta y queda solo el nombre.
+  return '<img src="https://flagcdn.com/24x18/'+code+'.png" alt="'+alt+'" '+
+         'onerror="this.style.display=\'none\'" loading="lazy">';
 }
-function poblarAeropuertos(tipo){
-  const pais = document.getElementById(tipo+'_pais').value;
-  const sel = document.getElementById(tipo);
-  const grupos = tipo==='origen' ? CAT.origenes : CAT.destinos;
+
+function crearSelectorPais(picker){
+  const target = picker.dataset.target;       // 'origen' | 'destino' | 'origen_vuelta' | 'destino_vuelta'
+  const grupos = CAT.origenes;                 // mismo listado para todos
+  const paises = Object.keys(grupos);
+  const ph = target.startsWith('origen') ? 'País de origen' : 'País de destino';
+
+  // Campo oculto que guarda el país seleccionado.
+  let hidden = document.getElementById(target+'_pais');
+  if(!hidden){
+    hidden = document.createElement('input');
+    hidden.type='hidden'; hidden.id=target+'_pais';
+    picker.appendChild(hidden);
+  }
+
+  picker.innerHTML =
+    '<button type="button" class="pp-btn" id="ppbtn-'+target+'">'+
+      '<span class="pp-label pp-ph">'+ph+'</span><span class="pp-caret">▼</span>'+
+    '</button>'+
+    '<div class="pp-panel hide" id="pppanel-'+target+'">'+
+      '<div class="pp-search"><input type="text" placeholder="Buscar país…" id="ppsearch-'+target+'" autocomplete="off"></div>'+
+      '<div id="pplist-'+target+'"></div>'+
+    '</div>';
+  picker.appendChild(hidden);
+
+  const btn = picker.querySelector('#ppbtn-'+target);
+  const panel = picker.querySelector('#pppanel-'+target);
+  const search = picker.querySelector('#ppsearch-'+target);
+  const list = picker.querySelector('#pplist-'+target);
+  const labelEl = btn.querySelector('.pp-label');
+
+  function render(filtro){
+    const f = (filtro||'').trim().toLowerCase();
+    const items = paises.filter(p=> !f || p.toLowerCase().includes(f));
+    if(!items.length){ list.innerHTML='<div class="pp-empty">Sin resultados</div>'; return; }
+    list.innerHTML = items.map(p=>{
+      const iso = (grupos[p] && grupos[p].iso) || '';
+      return '<div class="pp-opt" data-pais="'+p.replace(/"/g,'&quot;')+'">'+
+             _flagImg(iso, p)+'<span>'+p+'</span></div>';
+    }).join('');
+    list.querySelectorAll('.pp-opt').forEach(el=>{
+      el.onclick = ()=> elegir(el.dataset.pais);
+    });
+  }
+  function abrir(){ panel.classList.remove('hide'); search.value=''; render(''); search.focus(); }
+  function cerrar(){ panel.classList.add('hide'); }
+  function elegir(p){
+    PAIS_VALOR[target]=p; hidden.value=p;
+    const iso = (grupos[p] && grupos[p].iso) || '';
+    labelEl.classList.remove('pp-ph');
+    labelEl.innerHTML = _flagImg(iso,p)+' <span>'+p+'</span>';
+    btn.classList.remove('bad');
+    cerrar();
+    poblarAeropuertos(target);
+    autoResumen();
+  }
+
+  btn.onclick = ()=>{ panel.classList.contains('hide') ? abrir() : cerrar(); };
+  search.oninput = ()=> render(search.value);
+  // Cerrar al hacer clic fuera.
+  document.addEventListener('click', e=>{ if(!picker.contains(e.target)) cerrar(); });
+}
+document.querySelectorAll('.pais-picker').forEach(crearSelectorPais);
+
+function poblarAeropuertos(target){
+  const pais = (document.getElementById(target+'_pais')||{}).value || '';
+  const sel = document.getElementById(target);
+  const grupos = CAT.origenes;   // mismo listado para todos
   sel.innerHTML = '';
   if(!pais){ sel.disabled = true; sel.innerHTML='<option value="">Elige país primero</option>'; return; }
   const aps = (grupos[pais] && grupos[pais].aeropuertos) || [];
@@ -353,21 +466,30 @@ function poblarAeropuertos(tipo){
   sel.innerHTML = '<option value="">Ciudad…</option>';
   aps.forEach(a=>{ const o=document.createElement('option'); o.value=a.iata; o.textContent=a.ciudad+' ('+a.iata+')'; sel.appendChild(o); });
   if(aps.length===1){ sel.value = aps[0].iata; }
+  sel.onchange = autoResumen;
 }
-llenarPaises('origen_pais', CAT.origenes, 'País de origen');
-llenarPaises('destino_pais', CAT.destinos, 'País de destino');
 
-/* ---- Tipo de viaje → muestra/oculta fechas ---- */
-function toggleFechas(){
-  const t = document.getElementById('tipo_viaje').value;
-  // ida -> solo salida · regreso -> solo regreso · ida_regreso -> ambas
-  document.getElementById('campo-salida').classList.toggle('hide', t==='regreso');
-  document.getElementById('campo-regreso').classList.toggle('hide', t==='ida');
+/* ---- Tramo de vuelta (opcional) ---- */
+function toggleVuelta(){
+  document.getElementById('seccion-vuelta').classList.remove('hide');
+  document.getElementById('btn-vuela').classList.add('hide');
+  autoResumen();
 }
-toggleFechas();
-document.getElementById('moneda').addEventListener('change', ()=>{
-  // (el signo $ es genérico; mantenemos $ para todas las monedas por simplicidad)
-});
+function quitarVuelta(){
+  document.getElementById('seccion-vuelta').classList.add('hide');
+  document.getElementById('btn-vuela').classList.remove('hide');
+  // Limpiar campos de vuelta
+  ['origen_vuelta','destino_vuelta'].forEach(t=>{
+    const h=document.getElementById(t+'_pais'); if(h) h.value='';
+    PAIS_VALOR[t]='';
+    const lbl = document.querySelector('#ppbtn-'+t+' .pp-label');
+    if(lbl){ lbl.classList.add('pp-ph'); lbl.textContent = t.startsWith('origen')?'País de origen':'País de destino'; }
+    const sel=document.getElementById(t); if(sel){ sel.innerHTML='<option value="">Elige país primero</option>'; sel.disabled=true; }
+  });
+  document.getElementById('fecha_vuelta').value='';
+  autoResumen();
+}
+function hayVuelta(){ return !document.getElementById('seccion-vuelta').classList.contains('hide'); }
 
 /* ---- Modos ---- */
 function setModo(m){
@@ -407,8 +529,9 @@ function actualizarResumen(){
     const hitos = ['ahora'];
     for(let i=1;i<cant;i++) hitos.push('+'+(frec*i)+' días');
     txt = '📨 Recibirás '+cant+' reportes: ' + hitos.join(', ') + '.';
-  }else{ box.classList.add('hide'); return; }
+  }else{ box.classList.add('hide'); autoResumen(); return; }
   box.textContent = txt; box.classList.remove('hide');
+  autoResumen();
 }
 
 /* ---- Precheck temporada ---- */
@@ -418,8 +541,7 @@ async function precheck(){
   if(!destino){ av.className='aviso'; av.textContent='Elige un destino primero para revisar la temporada.'; av.classList.remove('hide'); return; }
   av.className='aviso'; av.innerHTML='<span class="spin"></span>Revisando temporada…'; av.classList.remove('hide');
   const body = { destino,
-    fecha_salida: document.getElementById('fecha_salida').value || null,
-    fecha_regreso: document.getElementById('fecha_regreso').value || null };
+    fecha_salida: document.getElementById('fecha_salida').value || null };
   try{
     const r = await fetch('/api/tracy/precheck', {method:'POST',
       headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
@@ -439,6 +561,27 @@ function clearErrs(){
 }
 function setErr(id, feId, msg){ document.getElementById(feId).textContent=msg; const el=document.getElementById(id); if(el) el.classList.add('bad'); }
 
+/* Comprueba validez SIN pintar errores (para el auto-resumen). */
+function razonesInvalido(){
+  const r = [];
+  if(document.getElementById('nombre').value.trim().length < 2) r.push('nombre');
+  if(document.getElementById('apellido').value.trim().length < 2) r.push('apellido');
+  if(whatsappDigits().length < 10) r.push('whatsapp');
+  if(!document.getElementById('origen').value) r.push('origen');
+  if(!document.getElementById('destino').value) r.push('destino');
+  if(!document.getElementById('fecha_salida').value) r.push('fecha_salida');
+  if(hayVuelta()){
+    if(!document.getElementById('origen_vuelta').value) r.push('origen_vuelta');
+    if(!document.getElementById('destino_vuelta').value) r.push('destino_vuelta');
+    if(!document.getElementById('fecha_vuelta').value) r.push('fecha_vuelta');
+  }
+  if(!MODO) r.push('modo');
+  if(MODO==='rastreo' && !rastreoSel.length) r.push('rastreo');
+  return r;
+}
+function formularioValido(){ return razonesInvalido().length===0; }
+
+/* Validación con pintado de errores (solo tras intento de envío). */
 function validar(){
   clearErrs();
   let ok = true;
@@ -448,54 +591,71 @@ function validar(){
   if(wa.length < 10){ setErr('whatsapp','fe-whatsapp','Escribe un número de WhatsApp válido.'); ok=false; }
   if(!document.getElementById('origen').value){ setErr('origen','fe-origen','Elige país y aeropuerto de origen.'); ok=false; }
   if(!document.getElementById('destino').value){ setErr('destino','fe-destino','Elige país y aeropuerto de destino.'); ok=false; }
+  if(!document.getElementById('fecha_salida').value){ setErr('fecha_salida','fe-fecha_salida','Elige la fecha de salida (ida).'); ok=false; }
+  if(hayVuelta()){
+    if(!document.getElementById('origen_vuelta').value){ setErr('origen_vuelta','fe-origen_vuelta','Elige país y aeropuerto de origen de la vuelta.'); ok=false; }
+    if(!document.getElementById('destino_vuelta').value){ setErr('destino_vuelta','fe-destino_vuelta','Elige país y aeropuerto de destino de la vuelta.'); ok=false; }
+    if(!document.getElementById('fecha_vuelta').value){ setErr('fecha_vuelta','fe-fecha_vuelta','Elige la fecha de vuelta.'); ok=false; }
+  }
   if(!MODO){ document.getElementById('err-form').textContent='Elige un modo de consulta.'; ok=false; }
   if(MODO==='rastreo' && !rastreoSel.length){ document.getElementById('err-form').textContent='Marca al menos un día de rastreo.'; ok=false; }
   return ok;
 }
 
+function _ciudadTxt(id){ const s=document.getElementById(id); return s.options[s.selectedIndex]?.text || s.value; }
+
 function resumenLegible(){
-  const o = document.getElementById('origen'); const d = document.getElementById('destino');
-  const oName = o.options[o.selectedIndex]?.text || o.value;
-  const dName = d.options[d.selectedIndex]?.text || d.value;
+  const oName = _ciudadTxt('origen'), dName = _ciudadTxt('destino');
+  const oPais = document.getElementById('origen_pais').value || '';
+  const dPais = document.getElementById('destino_pais').value || '';
   const nombre = document.getElementById('nombre').value.trim();
   const apellido = document.getElementById('apellido').value.trim();
-  const tipo = document.getElementById('tipo_viaje').value;
-  const tipoTxt = {ida:'Solo ida', regreso:'Solo regreso', ida_regreso:'Ida y regreso'}[tipo];
   const fs = document.getElementById('fecha_salida').value || '—';
-  const fr = document.getElementById('fecha_regreso').value || '—';
-  let fechasTxt = '';
-  if(tipo==='ida') fechasTxt = `🗓️ Salida: ${fs}`;
-  else if(tipo==='regreso') fechasTxt = `🗓️ Regreso: ${fr}`;
-  else fechasTxt = `🗓️ Salida: ${fs} · Regreso: ${fr}`;
   const moneda = document.getElementById('moneda').value;
   const entregas = document.getElementById('resumen-entregas').textContent || '';
-  const modoTxt = {rapida:'Consulta rápida', rastreo:'Rastreo', seguimiento:'Seguimiento'}[MODO];
-  return `<b>Revisa antes de confirmar</b><br>
+  const modoTxt = {rapida:'Consulta rápida', rastreo:'Rastreo', seguimiento:'Seguimiento'}[MODO] || '';
+  let html = `<b>Revisa tu investigación</b><br>
     👤 ${nombre} ${apellido}<br>
-    📍 ${oName} → ${dName}<br>
-    🧳 ${tipoTxt}<br>
-    ${fechasTxt}<br>
-    ✈️ Vuelo · 💱 ${moneda}<br>
+    ➡️ Ida: ${oName} (${oPais}) → ${dName} (${dPais})<br>
+    🗓️ Salida: ${fs}<br>`;
+  if(hayVuelta()){
+    const ovName=_ciudadTxt('origen_vuelta'), dvName=_ciudadTxt('destino_vuelta');
+    const ovPais=document.getElementById('origen_vuelta_pais').value||'';
+    const dvPais=document.getElementById('destino_vuelta_pais').value||'';
+    const fv=document.getElementById('fecha_vuelta').value || '—';
+    html += `⬅️ Vuelta: ${ovName} (${ovPais}) → ${dvName} (${dvPais})<br>
+    🗓️ Vuelta: ${fv}<br>`;
+  }
+  html += `✈️ Vuelo · 💱 ${moneda}<br>
     🔁 Modo: ${modoTxt}<br>
     ${entregas}`;
+  return html;
 }
 
-function revisarYConfirmar(){
-  if(!validar()) return;
-  document.getElementById('resumen-final').innerHTML = resumenLegible();
-  document.getElementById('confirmar').classList.remove('hide');
-  document.getElementById('btn-crear').classList.add('hide');
-}
-function editar(){
-  document.getElementById('confirmar').classList.add('hide');
-  document.getElementById('btn-crear').classList.remove('hide');
+/* Auto-resumen: visible solo cuando el formulario está completo y válido,
+   con SOLO el botón "Activar por WhatsApp" debajo. Nunca pinta errores. */
+function autoResumen(){
+  const resumen = document.getElementById('auto-resumen');
+  const activar = document.getElementById('activar');
+  if(document.getElementById('resultado') && !document.getElementById('resultado').classList.contains('hide')){
+    return; // ya activado
+  }
+  if(formularioValido()){
+    resumen.innerHTML = resumenLegible();
+    resumen.classList.remove('hide');
+    activar.classList.remove('hide');
+  }else{
+    resumen.classList.add('hide');
+    activar.classList.add('hide');
+  }
 }
 
 async function crear(){
   const err = document.getElementById('err-form'); err.textContent='';
+  if(!validar()) return;
   const btn = document.getElementById('btn-confirmar');
   btn.disabled = true; btn.innerHTML = '<span class="spin"></span>Buscando…';
-  const tipo = document.getElementById('tipo_viaje').value;
+  const conVuelta = hayVuelta();
   const body = {
     clave: CLAVE,
     nombre: document.getElementById('nombre').value.trim(),
@@ -504,9 +664,10 @@ async function crear(){
     origen: document.getElementById('origen').value,
     destino: document.getElementById('destino').value,
     motivo: document.getElementById('motivo').value,
-    tipo_viaje: tipo,
-    fecha_salida: (tipo!=='regreso' ? document.getElementById('fecha_salida').value : '') || null,
-    fecha_regreso: (tipo!=='ida' ? document.getElementById('fecha_regreso').value : '') || null,
+    fecha_salida: document.getElementById('fecha_salida').value || null,
+    origen_vuelta: conVuelta ? (document.getElementById('origen_vuelta').value || null) : null,
+    destino_vuelta: conVuelta ? (document.getElementById('destino_vuelta').value || null) : null,
+    fecha_vuelta: conVuelta ? (document.getElementById('fecha_vuelta').value || null) : null,
     flexible: document.getElementById('flexible').checked,
     moneda: document.getElementById('moneda').value,
     modo: MODO,
@@ -524,14 +685,22 @@ async function crear(){
     }
     const d = await r.json();
     document.getElementById('wa-link').href = d.wa_link;
-    document.getElementById('confirmar').classList.add('hide');
+    document.getElementById('auto-resumen').classList.add('hide');
+    document.getElementById('activar').classList.add('hide');
     document.getElementById('resultado').classList.remove('hide');
   }catch(_){
     err.textContent = 'No se pudo crear la consulta. Revisa tu conexión.';
   }finally{
-    btn.disabled = false; btn.textContent = '✅ Confirmar y activar';
+    btn.disabled = false; btn.textContent = '✅ Activar por WhatsApp';
   }
 }
+
+/* Auto-resumen reactivo a los campos de texto. */
+['nombre','apellido','whatsapp'].forEach(id=>{
+  const el=document.getElementById(id);
+  if(el) el.addEventListener('input', autoResumen);
+});
+document.getElementById('moneda').addEventListener('change', autoResumen);
 </script>
 </body>
 </html>

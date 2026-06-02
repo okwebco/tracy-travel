@@ -1,20 +1,16 @@
 """Lógica de valor de Tracy: construcción del payload del reporte,
 frase de recomendación (3-5 palabras) y mensaje de WhatsApp. Solo vuelos.
+
+El viaje se modela por TRAMOS one-way:
+  - IDA   (siempre): origen → destino + fecha_salida.
+  - VUELTA (opcional, independiente / open-jaw): origen_vuelta → destino_vuelta
+           + fecha_vuelta.
+Cada tramo se busca por separado y produce su propia lista Top 3.
 """
 import re
 from datetime import datetime
 
 from app.tracy import catalogo, temporadas, config
-
-TIPO_VIAJE_LABEL = {
-    "ida": "Solo ida",
-    "regreso": "Solo regreso",
-    "ida_regreso": "Ida y regreso",
-}
-
-
-def tipo_viaje_label(tipo: str | None) -> str:
-    return TIPO_VIAJE_LABEL.get(tipo or "ida_regreso", "Ida y regreso")
 
 
 def _fmt_precio(valor: float | None, moneda: str) -> str:
@@ -50,32 +46,55 @@ def frase_recomendacion(consulta, mejor_precio: float | None,
     return "Aún puede bajar"
 
 
-def construir_payload(consulta, vuelos: list[dict],
+def construir_payload(consulta, resultado: dict,
                       mejor_precio_previo: float | None) -> dict:
-    """Arma el JSON que se guarda en Reporte.payload_json y alimenta la página y el WhatsApp."""
-    moneda = (consulta.moneda or config.MONEDA_DEFECTO).upper()
-    mejor_vuelo = vuelos[0] if vuelos else None
+    """Arma el JSON que se guarda en Reporte.payload_json.
 
-    eval_temp = temporadas.evaluar(consulta.destino, consulta.fecha_salida, consulta.fecha_regreso)
+    `resultado` es el dict del aggregator: {"vuelos_ida": [...], "vuelos_vuelta": [...] | None}.
+    Alimenta la página de reporte y el mensaje de WhatsApp.
+    """
+    moneda = (consulta.moneda or config.MONEDA_DEFECTO).upper()
+    vuelos_ida = resultado.get("vuelos_ida") or []
+    vuelos_vuelta = resultado.get("vuelos_vuelta")
+
+    mejor_ida = vuelos_ida[0] if vuelos_ida else None
+
+    eval_temp = temporadas.evaluar(consulta.destino, consulta.fecha_salida, None)
     temporada_alta = eval_temp.get("temporada") == "alta"
 
-    precio_actual = mejor_vuelo["precio"] if mejor_vuelo else None
+    # El precio de referencia (para la heurística e histórico) es el más barato
+    # de la ida (tramo principal).
+    precio_actual = mejor_ida["precio"] if mejor_ida else None
     frase = frase_recomendacion(consulta, mejor_precio_previo, precio_actual, temporada_alta)
+
+    hay_vuelta = bool(getattr(consulta, "origen_vuelta", None) and getattr(consulta, "destino_vuelta", None))
 
     ahora = datetime.utcnow()
     return {
         "nombre": consulta.nombre,
         "apellido": consulta.apellido,
+        # Tramo IDA
         "origen": consulta.origen,
         "origen_nombre": catalogo.nombre(consulta.origen),
+        "origen_pais": catalogo.pais_de(consulta.origen),
         "destino": consulta.destino,
         "destino_nombre": catalogo.nombre(consulta.destino),
-        "motivo": consulta.motivo,
-        "tipo_viaje": consulta.tipo_viaje,
-        "moneda": moneda,
+        "destino_pais": catalogo.pais_de(consulta.destino),
         "fecha_salida": consulta.fecha_salida.isoformat() if consulta.fecha_salida else None,
-        "fecha_regreso": consulta.fecha_regreso.isoformat() if consulta.fecha_regreso else None,
-        "vuelos": vuelos,
+        "vuelos_ida": vuelos_ida,
+        # Tramo VUELTA (None si no aplica)
+        "tiene_vuelta": hay_vuelta,
+        "origen_vuelta": consulta.origen_vuelta if hay_vuelta else None,
+        "origen_vuelta_nombre": catalogo.nombre(consulta.origen_vuelta) if hay_vuelta else None,
+        "origen_vuelta_pais": catalogo.pais_de(consulta.origen_vuelta) if hay_vuelta else None,
+        "destino_vuelta": consulta.destino_vuelta if hay_vuelta else None,
+        "destino_vuelta_nombre": catalogo.nombre(consulta.destino_vuelta) if hay_vuelta else None,
+        "destino_vuelta_pais": catalogo.pais_de(consulta.destino_vuelta) if hay_vuelta else None,
+        "fecha_vuelta": consulta.fecha_vuelta.isoformat() if hay_vuelta and consulta.fecha_vuelta else None,
+        "vuelos_vuelta": vuelos_vuelta,
+        # Comunes
+        "motivo": consulta.motivo,
+        "moneda": moneda,
         "frase": frase,
         "temporada": eval_temp,
         "precio_referencia": precio_actual,
@@ -102,48 +121,55 @@ def _fmt_fecha_wa(valor) -> str:
     return dt.strftime("%Y-%m-%d %H:%M")
 
 
+def _escalas_n(v: dict) -> int:
+    e = v.get("escalas")
+    try:
+        return int(e)
+    except (TypeError, ValueError):
+        return 0
+
+
+def _bloque_tramo_wa(titulo_etiqueta: str, vuelos: list, moneda: str,
+                     etiqueta_sin_vuelos: str) -> list[str]:
+    """Genera las líneas de un tramo para el mensaje de WhatsApp.
+
+    titulo_etiqueta: 'IDA' o 'VUELTA'.
+    etiqueta_sin_vuelos: 'la ida' / 'la vuelta'.
+    """
+    if not vuelos:
+        return [f"No encontramos vuelos para {etiqueta_sin_vuelos} en estas fechas."]
+    v = vuelos[0]
+    aero = (v.get("aerolinea") or "").strip()
+    fecha = _fmt_fecha_wa(v.get("fecha_salida"))
+    return [
+        f"{titulo_etiqueta} por {aero} desde {_fmt_precio(v.get('precio'), moneda)}",
+        f"→ {fecha}",
+        f"Escala(s): {_escalas_n(v)}",
+    ]
+
+
 def mensaje_whatsapp_resumen(payload: dict, numero: str, cierre: bool = False,
                              mejor_precio_visto: float | None = None) -> str:
-    """Resumen corto para WhatsApp (formato §5)."""
+    """Resumen corto para WhatsApp (formato §5), por tramos."""
     moneda = payload.get("moneda", "COP")
     o = payload.get("origen_nombre", payload.get("origen"))
     d = payload.get("destino_nombre", payload.get("destino"))
     nombre = (payload.get("nombre") or "").strip()
-    tipo_viaje = payload.get("tipo_viaje") or "ida_regreso"
 
     saludo = (f"Hola {nombre}, soy Tracy 🕵️ Travel ✈️" if nombre
               else "Hola, soy Tracy 🕵️ Travel ✈️")
     lineas = [saludo, f"{o} → {d}", ""]
 
-    vuelos = payload.get("vuelos") or []
-    if vuelos:
-        v = vuelos[0]
-        aero = v.get("aerolinea", "") or ""
-        salida = _fmt_fecha_wa(v.get("fecha_salida"))
-        regreso = _fmt_fecha_wa(v.get("fecha_regreso"))
-        escalas = v.get("escalas")
-        escalas_txt = "Directo" if escalas == 0 else (f"{escalas} escala(s)" if escalas else "")
+    # Bloque IDA
+    lineas += _bloque_tramo_wa("IDA", payload.get("vuelos_ida") or [], moneda, "la ida")
 
-        def _con_escalas(txt: str) -> str:
-            return f"{txt} · {escalas_txt}" if escalas_txt else txt
-
-        lineas.append(f"Mejor vuelo: {_fmt_precio(v['precio'], moneda)}")
-        if tipo_viaje == "ida":
-            lineas.append(f"→ {aero}, {_con_escalas(salida)}")
-        elif tipo_viaje == "regreso":
-            ref = regreso or salida
-            lineas.append(f"→ {aero}, {_con_escalas(ref)}")
-        else:  # ida_regreso
-            lineas.append(f"→ {aero}, {salida}")
-            if regreso:
-                lineas.append(f"→ {_con_escalas(regreso)}")
-            elif escalas_txt:
-                lineas[-1] = f"→ {aero}, {_con_escalas(salida)}"
+    # Bloque VUELTA (solo si hay tramo)
+    if payload.get("tiene_vuelta"):
         lineas.append("")
-        lineas.append(f"👉 *{payload.get('frase','')}*")  # *…* = negrita en WhatsApp
-    else:
-        lineas.append("No encontramos vuelos para estas fechas ahora.")
+        lineas += _bloque_tramo_wa("VUELTA", payload.get("vuelos_vuelta") or [], moneda, "la vuelta")
 
+    lineas.append("")
+    lineas.append(f"👉 *{payload.get('frase','')}*")  # *…* = negrita en WhatsApp
     lineas.append("")
     lineas.append(f"Ver detalle en {config.PUBLIC_BASE_URL}/{numero}")
     lineas.append("(Disponible 48 horas)")
@@ -160,17 +186,32 @@ def mensaje_whatsapp_resumen(payload: dict, numero: str, cierre: bool = False,
 
 
 def mensaje_bienvenida(consulta) -> str:
-    """Mensaje de activación tras el opt-in (en filas)."""
+    """Mensaje de activación tras el opt-in (formato §5)."""
     o = catalogo.nombre(consulta.origen)
+    op = catalogo.pais_de(consulta.origen)
     d = catalogo.nombre(consulta.destino)
+    dp = catalogo.pais_de(consulta.destino)
     nombre = (consulta.nombre or "").strip()
     saludo = f"¡Hola {nombre}!" if nombre else "¡Hola!"
-    return (
-        f"{saludo}\n"
-        f"Soy Tracy 🕵️ Travel ✈️\n"
-        f"\n"
-        f"Activé tu consulta:\n"
-        f"{o} → {d}.\n"
-        f"\n"
-        f"Recibirás ya tu primer reporte 👇 (entrega inmediata)."
-    )
+
+    lineas = [
+        saludo,
+        "Soy Tracy 🕵️ Travel ✈️",
+        "",
+        "Activé tu investigación de vuelos:",
+        f"De: *{o}* ({op})",
+        f"A: *{d}* ({dp})",
+    ]
+
+    if getattr(consulta, "origen_vuelta", None) and getattr(consulta, "destino_vuelta", None):
+        ov = catalogo.nombre(consulta.origen_vuelta)
+        ovp = catalogo.pais_de(consulta.origen_vuelta)
+        dv = catalogo.nombre(consulta.destino_vuelta)
+        dvp = catalogo.pais_de(consulta.destino_vuelta)
+        lineas.append(f"Vuelta: De *{ov}* ({ovp}) A *{dv}* ({dvp})")
+
+    lineas += [
+        "",
+        "Recibe ya tu primer reporte 👇",
+    ]
+    return "\n".join(lineas)

@@ -61,11 +61,15 @@ def _siguiente_checkpoint(consulta: Consulta) -> date | None:
 
 
 async def _generar_reporte(db: Session, c: Consulta) -> None:
-    """Ejecuta el aggregator para una consulta y crea su Reporte (no envía)."""
-    vuelos = await aggregator.buscar_vuelos(c)
+    """Ejecuta el aggregator para una consulta y crea su Reporte (no envía).
+
+    `aggregator.buscar_vuelos` devuelve un dict por tramos:
+    {"vuelos_ida": [...], "vuelos_vuelta": [...] | None}.
+    """
+    resultado = await aggregator.buscar_vuelos(c)
 
     mejor_previo = _mejor_precio_previo(db, c)
-    payload = services.construir_payload(c, vuelos, mejor_previo)
+    payload = services.construir_payload(c, resultado, mejor_previo)
 
     reporte = Reporte(
         consulta_id=c.id,

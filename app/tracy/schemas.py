@@ -1,7 +1,7 @@
 """Esquemas Pydantic para la API de Tracy Travel."""
 from datetime import date
 from typing import Optional
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, model_validator
 
 from app.tracy.modos import (
     MODOS, RASTREO_DIAS, SEGUIMIENTO_CANTIDADES, SEGUIMIENTO_FRECUENCIAS,
@@ -10,7 +10,6 @@ from app.tracy.modos import (
 
 MOTIVOS = {"turismo", "negocios", "familiar", "otros"}
 MONEDAS = {"COP", "USD", "EUR"}
-TIPOS_VIAJE = {"ida", "regreso", "ida_regreso"}
 
 
 class AccesoRequest(BaseModel):
@@ -24,7 +23,6 @@ class AccesoResponse(BaseModel):
 class PrecheckRequest(BaseModel):
     destino: str
     fecha_salida: Optional[date] = None
-    fecha_regreso: Optional[date] = None
 
 
 class PrecheckResponse(BaseModel):
@@ -39,12 +37,15 @@ class ConsultaCreate(BaseModel):
     nombre: str
     apellido: str
     whatsapp: str
+    # Tramo IDA (siempre)
     origen: str
     destino: str
-    motivo: str = "turismo"
-    tipo_viaje: str = "ida_regreso"
     fecha_salida: Optional[date] = None
-    fecha_regreso: Optional[date] = None
+    motivo: str = "turismo"
+    # Tramo VUELTA (opcional, independiente — open-jaw permitido)
+    origen_vuelta: Optional[str] = None
+    destino_vuelta: Optional[str] = None
+    fecha_vuelta: Optional[date] = None
     flexible: bool = False
     moneda: str = "COP"
     modo: str
@@ -76,6 +77,14 @@ class ConsultaCreate(BaseModel):
     def _iata(cls, v: str) -> str:
         return (v or "").strip().upper()
 
+    @field_validator("origen_vuelta", "destino_vuelta")
+    @classmethod
+    def _iata_vuelta(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        v = v.strip().upper()
+        return v or None
+
     @field_validator("motivo")
     @classmethod
     def _motivo(cls, v: str) -> str:
@@ -84,13 +93,19 @@ class ConsultaCreate(BaseModel):
             raise ValueError(f"motivo debe ser uno de {MOTIVOS}")
         return v
 
-    @field_validator("tipo_viaje")
-    @classmethod
-    def _tipo_viaje(cls, v: str) -> str:
-        v = (v or "ida_regreso").strip().lower()
-        if v not in TIPOS_VIAJE:
-            raise ValueError(f"tipo_viaje debe ser uno de {TIPOS_VIAJE}")
-        return v
+    @model_validator(mode="after")
+    def _validar_vuelta(self):
+        # Si viene CUALQUIER campo de vuelta, deben venir los tres.
+        campos = [self.origen_vuelta, self.destino_vuelta, self.fecha_vuelta]
+        if any(c is not None for c in campos):
+            if not all(c is not None for c in campos):
+                raise ValueError(
+                    "Para el tramo de vuelta se requieren origen_vuelta, "
+                    "destino_vuelta y fecha_vuelta"
+                )
+            if self.origen_vuelta == self.destino_vuelta:
+                raise ValueError("origen_vuelta y destino_vuelta no pueden ser iguales")
+        return self
 
     @field_validator("modo")
     @classmethod

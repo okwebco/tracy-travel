@@ -26,14 +26,11 @@ WHATSAPP_SENDER = _env("WHATSAPP_SENDER", "573126593121")
 PUBLIC_BASE_URL = _env("PUBLIC_BASE_URL", "http://localhost:8000").rstrip("/")
 
 # Proveedores activos (coma-separados)
-PROVEEDORES_VUELOS = [p.strip() for p in _env("PROVEEDORES_VUELOS", "travelpayouts,amadeus").split(",") if p.strip()]
+PROVEEDORES_VUELOS = [p.strip() for p in _env("PROVEEDORES_VUELOS", "travelpayouts").split(",") if p.strip()]
 
 # Credenciales opcionales
 TRAVELPAYOUTS_TOKEN = _env("TRAVELPAYOUTS_TOKEN", "")
 TRAVELPAYOUTS_MARKER = _env("TRAVELPAYOUTS_MARKER", "")
-AMADEUS_CLIENT_ID = _env("AMADEUS_CLIENT_ID", "")
-AMADEUS_CLIENT_SECRET = _env("AMADEUS_CLIENT_SECRET", "")
-AMADEUS_BASE = _env("AMADEUS_BASE", "https://test.api.amadeus.com").rstrip("/")
 
 # Moneda por defecto
 MONEDA_DEFECTO = _env("MONEDA_DEFECTO", "COP")

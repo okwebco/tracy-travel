@@ -1,11 +1,13 @@
 # Tracy Travel
 
 Tracy Travel es un rastreador de precios de **vuelos** con cara
-de asistente. Desde una landing pública el usuario elige origen, destino, fechas
-(tipo de viaje: ida / regreso / ida y regreso) y modo de seguimiento; Tracy
-confirma la suscripción por WhatsApp (opt-in), revisa precios cada día y envía
-un reporte con las mejores ofertas, enlazando a una página de reporte que se
-autodestruye a las 48 horas.
+de asistente. Desde una landing pública el usuario arma su viaje por tramos:
+un tramo de **IDA** (origen → destino + fecha) y, opcionalmente, un tramo de
+**VUELTA** independiente (puede ser open-jaw: otro origen → otro destino + fecha).
+Cada tramo se busca por separado como one-way. Tracy confirma la suscripción por
+WhatsApp (opt-in), revisa precios cada día y envía un reporte con las mejores
+ofertas por tramo, enlazando a una página de reporte que se autodestruye a las
+48 horas.
 
 Funciona en **MODO DEMO** sin ninguna credencial: los proveedores degradan a
 datos de ejemplo (mock) y los envíos de WhatsApp se registran en consola.
@@ -31,7 +33,7 @@ datos de ejemplo (mock) y los envíos de WhatsApp se registran en consola.
   header `X-Cron-Token`. También se ejecutan vía APScheduler en local.
 - **Reporte** (`/{numero}`): página server-side del último reporte vigente del
   número, con `noindex`.
-- **Proveedores** (vuelos): Travelpayouts, Amadeus y mock (demo).
+- **Proveedores** (vuelos): Travelpayouts y mock (demo).
 
 ## Ejecutar en local
 
@@ -67,7 +69,6 @@ Ver [`.env.example`](.env.example). Las principales:
 | `CRON_TOKEN` | Protege los crons internos. |
 | `PROVEEDORES_VUELOS` | Proveedores de vuelos activos. |
 | `TRAVELPAYOUTS_TOKEN` / `TRAVELPAYOUTS_MARKER` | Travelpayouts (marker 734957). |
-| `AMADEUS_CLIENT_ID` / `AMADEUS_CLIENT_SECRET` / `AMADEUS_BASE` | Amadeus Self-Service. |
 | `MONEDA_DEFECTO` | Moneda por defecto (`COP`). |
 | `REPORTE_TTL_HORAS` | Vida de los reportes (48 h). |
 

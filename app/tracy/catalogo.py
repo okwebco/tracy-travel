@@ -200,6 +200,11 @@ def pais(iata: str) -> str | None:
     return datos["pais"] if datos else None
 
 
+def pais_de(iata: str) -> str:
+    """Nombre del país del aeropuerto: 'País' o '' si no se conoce."""
+    return pais(iata) or ""
+
+
 def coords(iata: str) -> tuple[float, float] | None:
     datos = info(iata)
     if datos and datos.get("lat") is not None and datos.get("lon") is not None:

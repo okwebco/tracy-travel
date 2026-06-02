@@ -26,14 +26,17 @@ class Consulta(Base):
     nombre = Column(String(60), nullable=False)          # nombre de la persona
     apellido = Column(String(60), nullable=False)        # apellido de la persona
     whatsapp = Column(String(20), nullable=False)        # 57XXXXXXXXXX
+    # Tramo IDA (siempre)
     origen = Column(String(3), nullable=False)           # IATA
     destino = Column(String(3), nullable=False)          # IATA
-    motivo = Column(String(12), nullable=False)          # turismo | negocios | familiar | otros
-    # Tipo de viaje: ida | regreso | ida_regreso
-    tipo_viaje = Column(String(12), nullable=False, default="ida_regreso")
-
     fecha_salida = Column(Date, nullable=True)
-    fecha_regreso = Column(Date, nullable=True)
+    motivo = Column(String(12), nullable=False)          # turismo | negocios | familiar | otros
+
+    # Tramo VUELTA (opcional, independiente — puede ser open-jaw)
+    origen_vuelta = Column(String(3), nullable=True)     # IATA
+    destino_vuelta = Column(String(3), nullable=True)    # IATA
+    fecha_vuelta = Column(Date, nullable=True)
+
     flexible = Column(Boolean, default=False)
     moneda = Column(String(5), default="COP")
 
