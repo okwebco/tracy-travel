@@ -134,7 +134,7 @@ async def crear_consulta(req: ConsultaCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(consulta)
 
-    _nom = (req.nombre or "").strip()
+    _nom = " ".join(x for x in [(req.nombre or "").strip(), (req.apellido or "").strip()] if x)
     texto = (f"Hola {_nom}, actívate enviando este código: {codigo}" if _nom
              else f"Hola, actívate enviando este código: {codigo}")
     wa_link = f"https://wa.me/{config.WHATSAPP_SENDER}?text={urllib.parse.quote(texto)}"
