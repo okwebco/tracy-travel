@@ -3,7 +3,7 @@
 Se registran sobre la misma Base de SQLAlchemy del proyecto, en tablas
 independientes (prefijo tracy_) para no interferir con la app de finanzas.
 """
-from sqlalchemy import Column, Integer, String, Float, Boolean, Date, DateTime, Text, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, Date, DateTime, Text, ForeignKey
 from sqlalchemy.orm import relationship
 from datetime import datetime
 
@@ -11,7 +11,7 @@ from app.database import Base
 
 
 class Consulta(Base):
-    """Una consulta acotada de rastreo: vuelo, hospedaje o ambos.
+    """Una consulta acotada de rastreo de vuelos.
 
     Modos de entrega (ADENDA v2):
       - `rapida`     : 1 búsqueda inmediata, una sola vez.
@@ -28,7 +28,6 @@ class Consulta(Base):
     whatsapp = Column(String(20), nullable=False)        # 57XXXXXXXXXX
     origen = Column(String(3), nullable=False)           # IATA
     destino = Column(String(3), nullable=False)          # IATA
-    macro = Column(String(12), nullable=False)           # vuelo | hospedaje | ambos
     motivo = Column(String(12), nullable=False)          # turismo | negocios | familiar | otros
     # Tipo de viaje: ida | regreso | ida_regreso
     tipo_viaje = Column(String(12), nullable=False, default="ida_regreso")
@@ -36,10 +35,6 @@ class Consulta(Base):
     fecha_salida = Column(Date, nullable=True)
     fecha_regreso = Column(Date, nullable=True)
     flexible = Column(Boolean, default=False)
-    noches = Column(Integer, nullable=True)
-
-    hotel_precio_min = Column(Float, nullable=True)
-    hotel_precio_max = Column(Float, nullable=True)
     moneda = Column(String(5), default="COP")
 
     modo = Column(String(12), nullable=False)            # rapida | rastreo | seguimiento
@@ -66,7 +61,7 @@ class Consulta(Base):
 
 
 class Reporte(Base):
-    """Un reporte generado en un checkpoint: Top 3 vuelos / hoteles, total,
+    """Un reporte generado en un checkpoint: Top 3 vuelos, precio de referencia,
     frase de recomendación, enlaces. Se sirve en /{numero} y expira a las 48 h."""
     __tablename__ = "tracy_reportes"
 

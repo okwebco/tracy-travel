@@ -108,10 +108,6 @@ async def crear_consulta(req: ConsultaCreate, db: Session = Depends(get_db)):
         seguimiento_frecuencia = req.seguimiento_frecuencia
         ejecuciones_totales = seguimiento_cantidad
 
-    # Hospedaje requiere noches si macro incluye hotel
-    if req.macro in ("hospedaje", "ambos") and not req.noches:
-        raise HTTPException(status_code=400, detail="Indica el número de noches para hospedaje")
-
     codigo = secrets.token_hex(3).upper()  # 6 chars
 
     consulta = Consulta(
@@ -120,15 +116,11 @@ async def crear_consulta(req: ConsultaCreate, db: Session = Depends(get_db)):
         whatsapp=req.whatsapp,
         origen=req.origen,
         destino=req.destino,
-        macro=req.macro,
         motivo=req.motivo,
         tipo_viaje=req.tipo_viaje,
         fecha_salida=fecha_salida,
         fecha_regreso=fecha_regreso,
         flexible=req.flexible,
-        noches=req.noches,
-        hotel_precio_min=req.hotel_precio_min,
-        hotel_precio_max=req.hotel_precio_max,
         moneda=(req.moneda or config.MONEDA_DEFECTO).upper(),
         modo=req.modo,
         rastreo_dias=rastreo_dias_csv,

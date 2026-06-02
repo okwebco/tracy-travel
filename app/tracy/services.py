@@ -1,9 +1,9 @@
 """Lógica de valor de Tracy: construcción del payload del reporte,
-frase de recomendación (3-5 palabras), total estimado y mensaje de WhatsApp.
+frase de recomendación (3-5 palabras) y mensaje de WhatsApp. Solo vuelos.
 """
 from datetime import datetime
 
-from app.tracy import catalogo, temporadas, config, modos as modos_mod
+from app.tracy import catalogo, temporadas, config
 
 TIPO_VIAJE_LABEL = {
     "ida": "Solo ida",
@@ -49,33 +49,17 @@ def frase_recomendacion(consulta, mejor_precio: float | None,
     return "Aún puede bajar"
 
 
-def calcular_total(mejor_vuelo: dict | None, mejor_hotel: dict | None,
-                   noches: int | None) -> float | None:
-    """Total estimado = vuelo + hotel/noche × noches."""
-    total = 0.0
-    tiene = False
-    if mejor_vuelo:
-        total += mejor_vuelo["precio"]; tiene = True
-    if mejor_hotel and noches:
-        total += mejor_hotel["precio"] * noches; tiene = True
-    elif mejor_hotel:
-        total += mejor_hotel["precio"]; tiene = True
-    return round(total, 2) if tiene else None
-
-
-def construir_payload(consulta, vuelos: list[dict], hoteles: list[dict],
+def construir_payload(consulta, vuelos: list[dict],
                       mejor_precio_previo: float | None) -> dict:
     """Arma el JSON que se guarda en Reporte.payload_json y alimenta la página y el WhatsApp."""
     moneda = (consulta.moneda or config.MONEDA_DEFECTO).upper()
     mejor_vuelo = vuelos[0] if vuelos else None
-    mejor_hotel = hoteles[0] if hoteles else None
 
     eval_temp = temporadas.evaluar(consulta.destino, consulta.fecha_salida, consulta.fecha_regreso)
     temporada_alta = eval_temp.get("temporada") == "alta"
 
-    precio_actual = mejor_vuelo["precio"] if mejor_vuelo else (mejor_hotel["precio"] if mejor_hotel else None)
+    precio_actual = mejor_vuelo["precio"] if mejor_vuelo else None
     frase = frase_recomendacion(consulta, mejor_precio_previo, precio_actual, temporada_alta)
-    total = calcular_total(mejor_vuelo, mejor_hotel, consulta.noches)
 
     ahora = datetime.utcnow()
     return {
@@ -85,16 +69,12 @@ def construir_payload(consulta, vuelos: list[dict], hoteles: list[dict],
         "origen_nombre": catalogo.nombre(consulta.origen),
         "destino": consulta.destino,
         "destino_nombre": catalogo.nombre(consulta.destino),
-        "macro": consulta.macro,
         "motivo": consulta.motivo,
         "tipo_viaje": consulta.tipo_viaje,
         "moneda": moneda,
-        "noches": consulta.noches,
         "fecha_salida": consulta.fecha_salida.isoformat() if consulta.fecha_salida else None,
         "fecha_regreso": consulta.fecha_regreso.isoformat() if consulta.fecha_regreso else None,
         "vuelos": vuelos,
-        "hoteles": hoteles,
-        "total_estimado": total,
         "frase": frase,
         "temporada": eval_temp,
         "precio_referencia": precio_actual,
@@ -115,20 +95,12 @@ def mensaje_whatsapp_resumen(payload: dict, numero: str, cierre: bool = False,
     lineas = [saludo]
 
     vuelos = payload.get("vuelos") or []
-    hoteles = payload.get("hoteles") or []
     if vuelos:
         v = vuelos[0]
         fechas = v.get("fecha_salida") or ""
         if v.get("fecha_regreso"):
             fechas = f"{fechas} → {v['fecha_regreso']}"
         lineas.append(f"Mejor vuelo: {_fmt_precio(v['precio'], moneda)} ({v.get('aerolinea','')}, {fechas})")
-    if hoteles:
-        h = hoteles[0]
-        lineas.append(f"Mejor hotel: {_fmt_precio(h['precio'], moneda)}/noche ({h.get('nombre','')})")
-
-    total = payload.get("total_estimado")
-    if total is not None:
-        lineas.append(f"Total estimado: {_fmt_precio(total, moneda)}")
 
     lineas.append(f"👉 {payload.get('frase','')}")
     lineas.append(f"Ver detalle (48 h): {config.PUBLIC_BASE_URL}/{numero}")
@@ -147,16 +119,17 @@ def mensaje_whatsapp_resumen(payload: dict, numero: str, cierre: bool = False,
 
 
 def mensaje_bienvenida(consulta) -> str:
-    """Mensaje de activación tras el opt-in."""
+    """Mensaje de activación tras el opt-in (en filas)."""
     o = catalogo.nombre(consulta.origen)
     d = catalogo.nombre(consulta.destino)
-    resumen = modos_mod.resumen_entregas(consulta)
     nombre = (consulta.nombre or "").strip()
-    saludo = f"🕵️ ¡Hola {nombre}! Soy Tracy Travel." if nombre else "🕵️ ¡Hola! Soy Tracy Travel."
+    saludo = f"¡Hola {nombre}!" if nombre else "¡Hola!"
     return (
-        f"{saludo} Activé tu consulta {o} → {d}.\n"
-        f"{resumen}\n"
-        f"Te envío ya tu primer reporte. 👇\n\n"
-        f"🔒 Nunca te pediremos dinero ni datos bancarios.\n"
-        f"Responde CANCELAR cuando quieras para detener el rastreo."
+        f"{saludo}\n"
+        f"Soy Tracy 🕵️ Travel ✈️\n"
+        f"\n"
+        f"Activé tu consulta:\n"
+        f"{o} → {d}.\n"
+        f"\n"
+        f"Recibirás ya tu primer reporte 👇 (entrega inmediata)."
     )

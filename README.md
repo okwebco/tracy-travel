@@ -1,10 +1,11 @@
 # Tracy Travel
 
-Tracy Travel es un rastreador de precios de **vuelos** y **hospedaje** con cara
+Tracy Travel es un rastreador de precios de **vuelos** con cara
 de asistente. Desde una landing pública el usuario elige origen, destino, fechas
-y modo de seguimiento; Tracy confirma la suscripción por WhatsApp (opt-in),
-revisa precios cada día y envía un reporte con las mejores ofertas, enlazando a
-una página de reporte que se autodestruye a las 48 horas.
+(tipo de viaje: ida / regreso / ida y regreso) y modo de seguimiento; Tracy
+confirma la suscripción por WhatsApp (opt-in), revisa precios cada día y envía
+un reporte con las mejores ofertas, enlazando a una página de reporte que se
+autodestruye a las 48 horas.
 
 Funciona en **MODO DEMO** sin ninguna credencial: los proveedores degradan a
 datos de ejemplo (mock) y los envíos de WhatsApp se registran en consola.
@@ -30,7 +31,7 @@ datos de ejemplo (mock) y los envíos de WhatsApp se registran en consola.
   header `X-Cron-Token`. También se ejecutan vía APScheduler en local.
 - **Reporte** (`/{numero}`): página server-side del último reporte vigente del
   número, con `noindex`.
-- **Proveedores**: Travelpayouts, Hotellook, Amadeus y mock (demo).
+- **Proveedores** (vuelos): Travelpayouts, Amadeus y mock (demo).
 
 ## Ejecutar en local
 
@@ -48,7 +49,7 @@ el healthcheck.
 
 Si no configuras `GREEN_API_*` ni tokens de proveedores, Tracy sigue funcionando:
 
-- Los proveedores de vuelos/hoteles devuelven datos mock.
+- Los proveedores de vuelos devuelven datos mock.
 - Los mensajes de WhatsApp no se envían: se imprimen en consola.
 - Si `CRON_TOKEN` está vacío, los endpoints de cron se permiten sin token.
 
@@ -64,7 +65,7 @@ Ver [`.env.example`](.env.example). Las principales:
 | `LANDING_PASSWORD` | Clave de acceso para crear consultas. |
 | `PUBLIC_BASE_URL` | Base de los enlaces de reporte. |
 | `CRON_TOKEN` | Protege los crons internos. |
-| `PROVEEDORES_VUELOS` / `PROVEEDORES_HOTELES` | Proveedores activos. |
+| `PROVEEDORES_VUELOS` | Proveedores de vuelos activos. |
 | `TRAVELPAYOUTS_TOKEN` / `TRAVELPAYOUTS_MARKER` | Travelpayouts (marker 734957). |
 | `AMADEUS_CLIENT_ID` / `AMADEUS_CLIENT_SECRET` / `AMADEUS_BASE` | Amadeus Self-Service. |
 | `MONEDA_DEFECTO` | Moneda por defecto (`COP`). |

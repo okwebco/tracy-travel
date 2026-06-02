@@ -51,10 +51,6 @@ footer a{color:#94a3b8;text-decoration:none}
 /* F6: créditos en azul y subrayado (dentro y fuera del formulario) */
 a.creditos{color:#3b82f6;text-decoration:underline}
 .legal{font-size:11px;color:#64748b;margin-top:14px;line-height:1.55}
-/* input con prefijo $ */
-.money{position:relative}
-.money>span{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:16px;pointer-events:none}
-.money>input{padding-left:26px}
 /* quitar flechas (spinners) de inputs numéricos */
 input[type=number]{-moz-appearance:textfield}
 input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
@@ -86,7 +82,7 @@ padding:6px 10px;cursor:pointer;font-size:13px;background:#0f172a;white-space:no
     <!-- F1 -->
     <h1>Investiga tu viaje</h1>
     <!-- F2 -->
-    <div class="sub">Tracy Travel investiga y rastrea precios de vuelos y hospedaje. Desde una página
+    <div class="sub">Tracy Travel investiga y rastrea precios de vuelos. Desde una página
       pública eliges origen, destino, fechas y modo de seguimiento; Tracy Travel confirma la suscripción
       por WhatsApp (opt-in), revisa precios cada día y envía un reporte con las mejores ofertas, enlazando
       a una página de reporte que se autodestruye a las 48 horas.</div>
@@ -146,13 +142,6 @@ padding:6px 10px;cursor:pointer;font-size:13px;background:#0f172a;white-space:no
     </div>
     <div class="field-err" id="fe-destino"></div>
 
-    <label>¿Qué rastreamos?</label>
-    <select id="macro" onchange="toggleHotel()">
-      <option value="vuelo">✈️ Solo vuelo</option>
-      <option value="hospedaje">🏨 Solo hospedaje</option>
-      <option value="ambos">✈️+🏨 Vuelo y hospedaje</option>
-    </select>
-
     <label>Motivo del viaje</label>
     <select id="motivo">
       <option value="turismo">Turismo</option>
@@ -190,23 +179,6 @@ padding:6px 10px;cursor:pointer;font-size:13px;background:#0f172a;white-space:no
     <!-- Revisar temporada: inmediatamente después de las fechas -->
     <button class="btn-alt" onclick="precheck()">📅 Revisar temporada</button>
     <div id="aviso-temp" class="aviso hide"></div>
-
-    <!-- Hospedaje -->
-    <div id="bloque-hotel" class="hide">
-      <label for="noches">Noches</label>
-      <input type="number" id="noches" min="1" placeholder="3">
-      <div class="field-err" id="fe-noches"></div>
-      <div class="row">
-        <div>
-          <label>Hospedaje <span id="lbl-moneda-min">$</span>mínimo</label>
-          <div class="money"><span>$</span><input type="number" id="hotel_min" placeholder="0"></div>
-        </div>
-        <div>
-          <label>Hospedaje <span id="lbl-moneda-max">$</span>máximo</label>
-          <div class="money"><span>$</span><input type="number" id="hotel_max" placeholder="500000"></div>
-        </div>
-      </div>
-    </div>
 
     <!-- Modo de consulta -->
     <label>Modo de consulta</label>
@@ -263,16 +235,12 @@ padding:6px 10px;cursor:pointer;font-size:13px;background:#0f172a;white-space:no
 
     <!-- Resultado: enlace de opt-in -->
     <div id="resultado" class="hide">
-      <div class="aviso ok"><b>¡Casi listo!</b> Toca el botón y envía el mensaje a Tracy para activar tu consulta.
-        Código: <b id="codigo"></b></div>
+      <div class="aviso ok"><b>¡Casi listo!</b> Toca el botón 👉 se abrirá WhatsApp con un mensaje ya listo 👉 solo envíalo y te llega tu reporte.</div>
       <a class="wa" id="wa-link" href="#" target="_blank">Activar por WhatsApp 💬</a>
-      <div class="ok-msg" style="margin-top:10px">✅ En cuanto confirmes, Tracy te envía tu primer reporte por WhatsApp.</div>
+      <div class="ok-msg" style="margin-top:10px">✅ En cuanto envíes el mensaje, Tracy te manda tu primer reporte por WhatsApp.</div>
     </div>
 
     <div class="legal">🔒 Nunca te pediremos dinero ni datos bancarios. Puedes responder CANCELAR en cualquier momento.</div>
-    <div class="legal" style="text-align:center;margin-top:10px">
-      <a class="creditos" href="http://okweb.co/jhoveloro/tracy-travel" target="_blank" rel="noopener">Tracy Travel | Crea Ok Web ® | 2026</a>
-    </div>
   </div>
 
   <footer>
@@ -344,12 +312,6 @@ function poblarAeropuertos(tipo){
 }
 llenarPaises('origen_pais', CAT.origenes, 'País de origen');
 llenarPaises('destino_pais', CAT.destinos, 'País de destino');
-
-/* ---- Hospedaje y moneda ---- */
-function toggleHotel(){
-  const m = document.getElementById('macro').value;
-  document.getElementById('bloque-hotel').classList.toggle('hide', m==='vuelo');
-}
 
 /* ---- Tipo de viaje → muestra/oculta fechas ---- */
 function toggleFechas(){
@@ -442,8 +404,6 @@ function validar(){
   if(wa.length < 10){ setErr('whatsapp','fe-whatsapp','Escribe tu WhatsApp con código de país (solo dígitos).'); ok=false; }
   if(!document.getElementById('origen').value){ setErr('origen','fe-origen','Elige país y aeropuerto de origen.'); ok=false; }
   if(!document.getElementById('destino').value){ setErr('destino','fe-destino','Elige país y aeropuerto de destino.'); ok=false; }
-  const macro = document.getElementById('macro').value;
-  if(macro!=='vuelo' && !num('noches')){ setErr('noches','fe-noches','Indica el número de noches.'); ok=false; }
   if(!MODO){ document.getElementById('err-form').textContent='Elige un modo de consulta.'; ok=false; }
   if(MODO==='rastreo' && !rastreoSel.length){ document.getElementById('err-form').textContent='Marca al menos un día de rastreo.'; ok=false; }
   return ok;
@@ -464,7 +424,6 @@ function resumenLegible(){
   else if(tipo==='regreso') fechasTxt = `🗓️ Regreso: ${fr}`;
   else fechasTxt = `🗓️ Salida: ${fs} · Regreso: ${fr}`;
   const moneda = document.getElementById('moneda').value;
-  const macro = document.getElementById('macro').selectedOptions[0].text;
   const entregas = document.getElementById('resumen-entregas').textContent || '';
   const modoTxt = {rapida:'Consulta rápida', rastreo:'Rastreo', seguimiento:'Seguimiento'}[MODO];
   return `<b>Revisa antes de confirmar</b><br>
@@ -472,7 +431,7 @@ function resumenLegible(){
     📍 ${oName} → ${dName}<br>
     🧳 ${tipoTxt}<br>
     ${fechasTxt}<br>
-    🎯 ${macro} · 💱 ${moneda}<br>
+    ✈️ Vuelo · 💱 ${moneda}<br>
     🔁 Modo: ${modoTxt}<br>
     ${entregas}`;
 }
@@ -500,15 +459,11 @@ async function crear(){
     whatsapp: document.getElementById('whatsapp').value,
     origen: document.getElementById('origen').value,
     destino: document.getElementById('destino').value,
-    macro: document.getElementById('macro').value,
     motivo: document.getElementById('motivo').value,
     tipo_viaje: tipo,
     fecha_salida: (tipo!=='regreso' ? document.getElementById('fecha_salida').value : '') || null,
     fecha_regreso: (tipo!=='ida' ? document.getElementById('fecha_regreso').value : '') || null,
     flexible: document.getElementById('flexible').checked,
-    noches: num('noches'),
-    hotel_precio_min: num('hotel_min'),
-    hotel_precio_max: num('hotel_max'),
     moneda: document.getElementById('moneda').value,
     modo: MODO,
     rastreo_dias: MODO==='rastreo' ? rastreoSel : null,
@@ -524,7 +479,6 @@ async function crear(){
       err.textContent = msg; return;
     }
     const d = await r.json();
-    document.getElementById('codigo').textContent = d.codigo;
     document.getElementById('wa-link').href = d.wa_link;
     document.getElementById('confirmar').classList.add('hide');
     document.getElementById('resultado').classList.remove('hide');

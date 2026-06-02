@@ -27,7 +27,6 @@ PUBLIC_BASE_URL = _env("PUBLIC_BASE_URL", "http://localhost:8000").rstrip("/")
 
 # Proveedores activos (coma-separados)
 PROVEEDORES_VUELOS = [p.strip() for p in _env("PROVEEDORES_VUELOS", "travelpayouts,amadeus").split(",") if p.strip()]
-PROVEEDORES_HOTELES = [p.strip() for p in _env("PROVEEDORES_HOTELES", "hotellook,amadeus").split(",") if p.strip()]
 
 # Credenciales opcionales
 TRAVELPAYOUTS_TOKEN = _env("TRAVELPAYOUTS_TOKEN", "")

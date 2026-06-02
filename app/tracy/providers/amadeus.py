@@ -1,4 +1,4 @@
-"""Proveedor Amadeus Self-Service (vuelos + hoteles), opcional.
+"""Proveedor Amadeus Self-Service (vuelos), opcional.
 
 Solo se activa si AMADEUS_CLIENT_ID y AMADEUS_CLIENT_SECRET están presentes.
 OAuth2 client_credentials con cacheo de token (~30 min). Degrada a [] ante fallos.
@@ -7,7 +7,7 @@ import time
 import httpx
 
 from app.tracy.providers.base import Proveedor
-from app.tracy import config, catalogo
+from app.tracy import config
 
 
 class AmadeusProvider(Proveedor):
@@ -97,51 +97,6 @@ class AmadeusProvider(Proveedor):
                 "fecha_regreso": regreso,
                 "escalas": escalas,
                 "link": "https://www.amadeus.com",
-                "proveedor": self.nombre,
-            })
-        return ofertas
-
-    async def buscar_hoteles(self, consulta) -> list[dict]:
-        if not self.disponible:
-            return []
-        token = await self._obtener_token()
-        if not token:
-            return []
-        url = f"{config.AMADEUS_BASE}/v3/shopping/hotel-offers"
-        params = {
-            "cityCode": consulta.destino.upper(),
-            "currency": (consulta.moneda or "COP").upper(),
-        }
-        if consulta.fecha_salida:
-            params["checkInDate"] = consulta.fecha_salida.isoformat()
-        if consulta.fecha_regreso:
-            params["checkOutDate"] = consulta.fecha_regreso.isoformat()
-
-        ciudad = catalogo.nombre(consulta.destino)
-        try:
-            async with httpx.AsyncClient(timeout=25.0, follow_redirects=True, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"}) as client:
-                r = await client.get(url, params=params,
-                                     headers={"Authorization": f"Bearer {token}"})
-                data = r.json()
-        except Exception as e:
-            print(f"[Tracy/Amadeus] Error hoteles: {e}")
-            return []
-
-        ofertas = []
-        for h in data.get("data", []):
-            try:
-                hotel = h["hotel"]["name"]
-                precio = float(h["offers"][0]["price"]["total"])
-            except (KeyError, IndexError, ValueError):
-                continue
-            ofertas.append({
-                "precio": precio,
-                "moneda": (consulta.moneda or "COP").upper(),
-                "nombre": hotel,
-                "estrellas": None,
-                "ciudad": ciudad,
-                "link": "https://www.amadeus.com",
-                "mapa": f"https://www.google.com/maps/search/?api=1&query={hotel.replace(' ', '+')}+{ciudad.replace(' ', '+')}",
                 "proveedor": self.nombre,
             })
         return ofertas

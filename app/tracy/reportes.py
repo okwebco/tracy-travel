@@ -69,18 +69,6 @@ def _tarjeta_vuelo(v: dict, moneda: str) -> str:
     </div>"""
 
 
-def _tarjeta_hotel(h: dict, moneda: str) -> str:
-    estrellas = "⭐" * int(h["estrellas"]) if h.get("estrellas") else ""
-    link = _esc(h.get("link") or "#")
-    mapa = _esc(h.get("mapa") or "#")
-    return f"""<div class="card">
-      <div class="precio">{_fmt_precio(h.get('precio'), moneda)}<span class="noche">/noche</span></div>
-      <div class="meta">{_esc(h.get('nombre') or '')} {estrellas} · {_esc(h.get('ciudad') or '')}</div>
-      <a class="btn" href="{link}" target="_blank" rel="noopener nofollow">Reservar</a>
-      <a class="btn alt" href="{mapa}" target="_blank" rel="noopener nofollow">Ver en mapa</a>
-    </div>"""
-
-
 def _render(payload: dict, creado: datetime) -> str:
     moneda = payload.get("moneda", "COP")
     o = _esc(payload.get("origen_nombre") or payload.get("origen"))
@@ -89,16 +77,10 @@ def _render(payload: dict, creado: datetime) -> str:
     tipo_viaje_lbl = {"ida": "Solo ida", "regreso": "Solo regreso", "ida_regreso": "Ida y regreso"}.get(
         payload.get("tipo_viaje") or "ida_regreso", "Ida y regreso")
     vuelos = payload.get("vuelos") or []
-    hoteles = payload.get("hoteles") or []
 
     bloques = []
     if vuelos:
         bloques.append("<h3>✈️ Top 3 vuelos</h3>" + "".join(_tarjeta_vuelo(v, moneda) for v in vuelos))
-    if hoteles:
-        bloques.append("<h3>🏨 Top 3 hoteles</h3>" + "".join(_tarjeta_hotel(h, moneda) for h in hoteles))
-
-    total = payload.get("total_estimado")
-    total_html = f'<div class="total">Total estimado: <b>{_fmt_precio(total, moneda)}</b></div>' if total is not None else ""
 
     temporada = payload.get("temporada") or {}
     temp_html = ""
@@ -123,15 +105,12 @@ h1{{font-size:22px;margin:6px 0}}
 .frase{{display:inline-block;background:#22c55e;color:#06281a;font-weight:700;
 border-radius:999px;padding:8px 18px;margin:10px 0;font-size:18px}}
 .aviso{{background:#1e293b;border-left:4px solid #f59e0b;padding:12px;border-radius:8px;margin:14px 0}}
-.total{{background:#1e293b;padding:12px;border-radius:8px;margin:14px 0;text-align:center;font-size:18px}}
 h3{{margin:22px 0 10px;border-bottom:1px solid #334155;padding-bottom:6px}}
 .card{{background:#1e293b;border-radius:12px;padding:14px;margin:10px 0}}
 .precio{{font-size:22px;font-weight:700;color:#38bdf8}}
-.noche{{font-size:13px;color:#94a3b8;font-weight:400}}
 .meta{{color:#cbd5e1;margin:6px 0 10px;font-size:14px}}
 .btn{{display:inline-block;background:#38bdf8;color:#06283b;text-decoration:none;
 font-weight:600;border-radius:8px;padding:8px 14px;margin-right:8px;font-size:14px}}
-.btn.alt{{background:#334155;color:#e2e8f0}}
 .hola{{color:#e2e8f0;font-size:15px;margin:2px 0 4px}}
 .tipo{{color:#94a3b8;font-size:13px}}
 footer{{margin-top:26px;color:#64748b;font-size:12px;text-align:center;line-height:1.6}}
@@ -147,7 +126,6 @@ footer a.creditos{{color:#3b82f6;text-decoration:underline}}
   <div class="frase">{frase}</div>
 </header>
 {temp_html}
-{total_html}
 {''.join(bloques)}
 <footer>
   <div>{disclaimer}</div>

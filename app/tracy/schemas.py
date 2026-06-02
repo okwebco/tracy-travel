@@ -8,7 +8,6 @@ from app.tracy.modos import (
 )
 
 
-MACROS = {"vuelo", "hospedaje", "ambos"}
 MOTIVOS = {"turismo", "negocios", "familiar", "otros"}
 MONEDAS = {"COP", "USD", "EUR"}
 TIPOS_VIAJE = {"ida", "regreso", "ida_regreso"}
@@ -42,15 +41,11 @@ class ConsultaCreate(BaseModel):
     whatsapp: str
     origen: str
     destino: str
-    macro: str
     motivo: str = "turismo"
     tipo_viaje: str = "ida_regreso"
     fecha_salida: Optional[date] = None
     fecha_regreso: Optional[date] = None
     flexible: bool = False
-    noches: Optional[int] = None
-    hotel_precio_min: Optional[float] = None
-    hotel_precio_max: Optional[float] = None
     moneda: str = "COP"
     modo: str
     # Rastreo: lista de días marcados (acumulativos), p. ej. [1,3,5,8].
@@ -80,14 +75,6 @@ class ConsultaCreate(BaseModel):
     @classmethod
     def _iata(cls, v: str) -> str:
         return (v or "").strip().upper()
-
-    @field_validator("macro")
-    @classmethod
-    def _macro(cls, v: str) -> str:
-        v = (v or "").strip().lower()
-        if v not in MACROS:
-            raise ValueError(f"macro debe ser uno de {MACROS}")
-        return v
 
     @field_validator("motivo")
     @classmethod
