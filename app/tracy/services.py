@@ -79,8 +79,7 @@ def construir_payload(consulta, vuelos: list[dict],
         "temporada": eval_temp,
         "precio_referencia": precio_actual,
         "hora_visto": ahora.strftime("%H:%M"),
-        "disclaimer": f"Precio visto a las {ahora.strftime('%H:%M')} UTC; puede cambiar al abrir el enlace.",
-        "afiliados": "Podemos recibir comisión; no aumenta tu precio.",
+        "disclaimer": f"Precio visto a las {ahora.strftime('%H:%M')} UTC; puede variar.",
     }
 
 

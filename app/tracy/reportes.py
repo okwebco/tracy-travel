@@ -61,13 +61,9 @@ def _tarjeta_vuelo(v: dict, moneda: str) -> str:
         fechas += f" → {_esc(v['fecha_regreso'])}"
     escalas = v.get("escalas")
     escalas_txt = "Directo" if escalas == 0 else (f"{escalas} escala(s)" if escalas else "")
-    link = _esc(v.get("link") or "#")
     return f"""<div class="card">
-      <div class="info">
-        <div class="precio">{_fmt_precio(v.get('precio'), moneda)}</div>
-        <div class="meta">{_esc(v.get('aerolinea') or '')} · {fechas} · {escalas_txt}</div>
-      </div>
-      <a class="btn" href="{link}" target="_blank" rel="noopener nofollow">Ver / reservar</a>
+      <div class="precio">{_fmt_precio(v.get('precio'), moneda)}</div>
+      <div class="meta">{_esc(v.get('aerolinea') or '')} · {fechas} · {escalas_txt}</div>
     </div>"""
 
 
@@ -94,7 +90,6 @@ def _render(payload: dict, creado: datetime) -> str:
 
     frase = _esc(payload.get("frase") or "")
     disclaimer = _esc(payload.get("disclaimer") or "")
-    afiliados = _esc(payload.get("afiliados") or "")
 
     return f"""<!doctype html><html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -111,14 +106,10 @@ h1{{font-size:22px;margin:6px 0}}
 border-radius:999px;padding:10px 22px;margin:12px 0;font-size:20px;letter-spacing:.3px}}
 .aviso{{background:#1e293b;border-left:4px solid #f59e0b;padding:12px;border-radius:8px;margin:14px 0;font-size:15px}}
 h3{{margin:22px 0 10px;border-bottom:1px solid #334155;padding-bottom:6px}}
-.card{{background:#1e293b;border-radius:12px;padding:14px;margin:10px 0;
-display:flex;align-items:center;justify-content:space-between;gap:14px}}
-.info{{flex:1 1 auto;min-width:0}}
+.card{{background:#1e293b;border-radius:12px;padding:14px;margin:10px 0}}
 .precio{{font-size:22px;font-weight:700;color:#38bdf8}}
 .meta{{color:#cbd5e1;margin:6px 0 0;font-size:14px}}
-.btn{{display:inline-block;background:#38bdf8;color:#06283b;text-decoration:none;
-font-weight:700;border-radius:8px;padding:10px 16px;font-size:14px;white-space:nowrap;flex:0 0 auto}}
-.hola{{color:#e2e8f0;font-size:15px;margin:2px 0 4px}}
+.hola{{color:#94a3b8;font-size:13px;font-weight:400;margin:2px 0}}
 .tipo{{color:#94a3b8;font-size:13px}}
 footer{{margin-top:26px;color:#64748b;font-size:12px;text-align:center;line-height:1.6}}
 footer a.creditos{{color:#3b82f6;text-decoration:underline}}
@@ -136,7 +127,6 @@ footer a.creditos{{color:#3b82f6;text-decoration:underline}}
 {''.join(bloques)}
 <footer>
   <div>{disclaimer}</div>
-  <div>{afiliados}</div>
   <div>Reporte generado {_esc(creado.strftime('%Y-%m-%d %H:%M'))} UTC · se borra a las 48 h.</div>
   <div><a class="creditos" href="http://okweb.co/jhoveloro/tracy-travel" target="_blank" rel="noopener nofollow">Tracy Travel | Crea Ok Web ® | 2026</a></div>
 </footer>
