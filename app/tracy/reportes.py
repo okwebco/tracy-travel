@@ -143,20 +143,20 @@ def _bloque_consulta(payload: dict, creado: datetime) -> str:
     if payload.get("tiene_vuelta"):
         ov = _esc(payload.get("origen_vuelta_nombre") or payload.get("origen_vuelta") or "")
         dv = _esc(payload.get("destino_vuelta_nombre") or payload.get("destino_vuelta") or "")
-        titulo += f" · vuelta {ov} → {dv}"
+        titulo += f" · regreso {ov} → {dv}"
 
     tramos = _bloque_tramo("IDA", payload.get("vuelos_ida") or [], moneda,
                            payload.get("origen") or "", payload.get("destino") or "",
                            payload.get("fecha_salida"), "la ida")
     if payload.get("tiene_vuelta"):
-        tramos += _bloque_tramo("VUELTA", payload.get("vuelos_vuelta") or [], moneda,
+        tramos += _bloque_tramo("REGRESO", payload.get("vuelos_vuelta") or [], moneda,
                                 payload.get("origen_vuelta") or "", payload.get("destino_vuelta") or "",
-                                payload.get("fecha_vuelta"), "la vuelta")
+                                payload.get("fecha_vuelta"), "el regreso")
 
     temporada = payload.get("temporada") or {}
     temp_html = f'<div class="aviso">📅 {_esc(temporada["mensaje"])}</div>' if temporada.get("mensaje") else ""
     frase = _esc(payload.get("frase") or "")
-    frase_html = f'<div class="frase">{frase}</div>' if frase else ""
+    frase_html = f'<div class="frase">Tip: {frase}</div>' if frase else ""
     return (f'<section class="consulta"><h2 class="ctitulo">{titulo}</h2>'
             f'{frase_html}{temp_html}{tramos}</section>')
 
@@ -178,10 +178,9 @@ body{{font-family:system-ui,sans-serif;background:#0f172a;color:#e2e8f0;margin:0
 header{{text-align:center;padding:24px 0 8px}}
 h1{{font-size:22px;margin:6px 0}}
 .ruta{{color:#94a3b8}}
-.consulta{{border-top:1px solid #334155;margin-top:18px;padding-top:4px}}
-.ctitulo{{font-size:15px;font-weight:700;color:#e2e8f0;margin:16px 0 6px}}
-.frase{{display:inline-block;background:#16a34a;color:#fff;font-weight:800;
-border-radius:999px;padding:8px 18px;margin:8px 0;font-size:17px}}
+.consulta{{border:1px solid #cbd5e1;border-radius:14px;padding:14px 16px;margin:16px 0}}
+.ctitulo{{font-size:15px;font-weight:700;color:#e2e8f0;margin:2px 0 8px}}
+.frase{{color:#22c55e;font-weight:700;font-size:15px;margin:8px 0}}
 .aviso{{background:#1e293b;border-left:4px solid #f59e0b;padding:12px;border-radius:8px;margin:12px 0;font-size:15px}}
 h3{{margin:16px 0 8px}}
 h3.tramo{{color:#38bdf8;font-size:17px}}

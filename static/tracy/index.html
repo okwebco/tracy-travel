@@ -48,8 +48,9 @@ button:disabled{opacity:.55;cursor:not-allowed}
 .err{color:#f87171;font-size:13px;margin-top:6px}
 .field-err{color:#f87171;font-size:12px;margin-top:4px;min-height:0}
 .ok-msg{color:#4ade80;font-size:14px}
-a.wa{display:block;text-align:center;background:#25d366;color:#06281a;font-weight:700;
-text-decoration:none;border-radius:12px;padding:14px;margin-top:14px;font-size:16px}
+.wa{display:block;width:100%;text-align:center;background:#25d366;color:#06281a;font-weight:700;
+text-decoration:none;border:none;border-radius:12px;padding:14px;margin-top:14px;font-size:16px;cursor:pointer}
+.wa:hover{opacity:.92}
 footer{text-align:center;color:#64748b;font-size:12px;margin:18px 0 26px;line-height:1.7}
 footer a{color:#94a3b8;text-decoration:none}
 /* F6: créditos en azul y subrayado (dentro y fuera del formulario) */
@@ -86,7 +87,8 @@ padding:6px 10px;cursor:pointer;font-size:13px;background:#0f172a;white-space:no
 .iti--inline-dropdown .iti__dropdown-content{background:#1e293b}
 .iti__search-input{background:#0f172a;color:#e2e8f0;border-color:#334155}
 /* Tramos */
-.tramo-titulo{font-weight:800;font-size:16px;color:#38bdf8;margin:18px 0 6px;display:flex;align-items:center;justify-content:space-between}
+.tramo-titulo{font-weight:400;font-size:15px;color:#38bdf8;margin:18px 0 8px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.tramo-titulo b{font-weight:800}
 .quitar{width:auto;margin:0;padding:4px 10px;font-size:12px;background:#334155;color:#e2e8f0;border-radius:8px}
 #btn-vuela{margin-top:10px}
 /* Selector de país personalizado con bandera (imagen) */
@@ -153,7 +155,7 @@ border:1px solid #334155;border-radius:10px;max-height:280px;overflow:auto;box-s
     <div class="field-err" id="fe-whatsapp"></div>
 
     <!-- ===== Tramo IDA ===== -->
-    <div class="tramo-titulo">➡️ Ida</div>
+    <div class="tramo-titulo"><span>Escoge país, ciudad y fecha para tu vuelo de <b>➡️ IDA</b></span></div>
 
     <!-- Ida origen: país → ciudad (dependiente) -->
     <div class="row">
@@ -181,7 +183,7 @@ border:1px solid #334155;border-radius:10px;max-height:280px;overflow:auto;box-s
     </div>
     <div class="field-err" id="fe-destino"></div>
 
-    <label for="fecha_salida">Fecha de salida (ida)</label>
+    <label for="fecha_salida">Fecha de IDA</label>
     <input type="date" id="fecha_salida" oninput="autoResumen()">
     <div class="field-err" id="fe-fecha_salida"></div>
 
@@ -190,11 +192,11 @@ border:1px solid #334155;border-radius:10px;max-height:280px;overflow:auto;box-s
     <div id="aviso-temp" class="aviso hide"></div>
 
     <!-- Botón para añadir tramo de vuelta -->
-    <button type="button" class="btn-alt" id="btn-vuela" onclick="toggleVuelta()">✈️ Vuelta</button>
+    <button type="button" class="btn-alt" id="btn-vuela" onclick="toggleVuelta()">✈️ Agregar REGRESO</button>
 
     <!-- ===== Tramo VUELTA (opcional) ===== -->
     <div id="seccion-vuelta" class="hide">
-      <div class="tramo-titulo">⬅️ Vuelta <button type="button" class="quitar" onclick="quitarVuelta()">✕ quitar</button></div>
+      <div class="tramo-titulo"><span>Escoge país, ciudad y fecha para tu vuelo de <b>⬅️ REGRESO</b></span> <button type="button" class="quitar" onclick="quitarVuelta()">✕ quitar</button></div>
 
       <div class="row">
         <div>
@@ -220,18 +222,10 @@ border:1px solid #334155;border-radius:10px;max-height:280px;overflow:auto;box-s
       </div>
       <div class="field-err" id="fe-destino_vuelta"></div>
 
-      <label for="fecha_vuelta">Fecha de vuelta</label>
+      <label for="fecha_vuelta">Fecha de REGRESO</label>
       <input type="date" id="fecha_vuelta" oninput="autoResumen()">
       <div class="field-err" id="fe-fecha_vuelta"></div>
     </div>
-
-    <label>Motivo del viaje</label>
-    <select id="motivo">
-      <option value="turismo">Turismo</option>
-      <option value="negocios">Negocios</option>
-      <option value="familiar">Familiar</option>
-      <option value="otros">Otros</option>
-    </select>
 
     <label>Moneda</label>
     <select id="moneda">
@@ -294,11 +288,10 @@ border:1px solid #334155;border-radius:10px;max-height:280px;overflow:auto;box-s
       <button onclick="crear()" id="btn-confirmar" class="wa">✅ Activar envío de alerta por WhatsApp</button>
     </div>
 
-    <!-- Resultado: enlace de opt-in -->
+    <!-- Resultado: confirmación tras abrir WhatsApp -->
     <div id="resultado" class="hide">
-      <div class="aviso ok"><b>¡Casi listo!</b> Toca el botón 👉 se abrirá WhatsApp con un mensaje ya listo 👉 solo envíalo y te llega tu reporte.</div>
-      <a class="wa" id="wa-link" href="#" target="_blank">Activar envío de alerta por WhatsApp 💬</a>
-      <div class="ok-msg" style="margin-top:10px">✅ En cuanto envíes el mensaje, Tracy te manda tu primer reporte por WhatsApp.</div>
+      <div class="aviso ok">✅ Te abrimos <b>WhatsApp</b> con el mensaje listo: <b>solo envíalo</b> y te llega tu reporte.<br>
+        Si no se abrió, <a id="wa-link" href="#" target="_blank" style="color:#22d3ee;text-decoration:underline">toca aquí</a>.</div>
     </div>
 
     <div class="legal">🔒 Nunca te pediremos dinero ni datos bancarios. Puedes responder CANCELAR en cualquier momento.</div>
@@ -626,7 +619,7 @@ function resumenLegible(){
     const ovPais=document.getElementById('origen_vuelta_pais').value||'';
     const dvPais=document.getElementById('destino_vuelta_pais').value||'';
     const fv=document.getElementById('fecha_vuelta').value || '—';
-    html += `<br>✈️${_lugar(ovName, ovPais)} → ${_lugar(dvName, dvPais)}<br>⬅️ Vuelta: ${fv}<br>`;
+    html += `<br>✈️${_lugar(ovName, ovPais)} → ${_lugar(dvName, dvPais)}<br>⬅️ Regreso: ${fv}<br>`;
   }
   html += `<br>💱Moneda: ${moneda}<br>🔁 Modo: ${modoTxt}<br>${alertas}`;
   return html;
@@ -663,7 +656,6 @@ async function crear(){
     whatsapp: whatsappDigits(),
     origen: document.getElementById('origen').value,
     destino: document.getElementById('destino').value,
-    motivo: document.getElementById('motivo').value,
     fecha_salida: document.getElementById('fecha_salida').value || null,
     origen_vuelta: conVuelta ? (document.getElementById('origen_vuelta').value || null) : null,
     destino_vuelta: conVuelta ? (document.getElementById('destino_vuelta').value || null) : null,
@@ -687,6 +679,7 @@ async function crear(){
     document.getElementById('auto-resumen').classList.add('hide');
     document.getElementById('activar').classList.add('hide');
     document.getElementById('resultado').classList.remove('hide');
+    window.open(d.wa_link, '_blank');  // abre WhatsApp directo (un solo botón verde)
   }catch(_){
     err.textContent = 'No se pudo crear la consulta. Revisa tu conexión.';
   }finally{

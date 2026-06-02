@@ -166,7 +166,7 @@ def mensaje_whatsapp_resumen(payload: dict, numero: str, cierre: bool = False,
     # Bloque VUELTA (solo si hay tramo)
     if payload.get("tiene_vuelta"):
         lineas.append("")
-        lineas += _bloque_tramo_wa("VUELTA", payload.get("vuelos_vuelta") or [], moneda, "la vuelta")
+        lineas += _bloque_tramo_wa("REGRESO", payload.get("vuelos_vuelta") or [], moneda, "el regreso")
 
     lineas.append("")
     lineas.append(f"👉 *{payload.get('frase','')}*")  # *…* = negrita en WhatsApp
@@ -208,7 +208,7 @@ def mensaje_bienvenida(consulta) -> str:
         ovp = catalogo.pais_de(consulta.origen_vuelta)
         dv = catalogo.nombre(consulta.destino_vuelta)
         dvp = catalogo.pais_de(consulta.destino_vuelta)
-        lineas.append(f"Vuelta: De *{ov}* ({ovp}) A *{dv}* ({dvp})")
+        lineas.append(f"Regreso: De *{ov}* ({ovp}) A *{dv}* ({dvp})")
 
     lineas += [
         "",
