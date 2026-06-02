@@ -36,8 +36,9 @@ background:#0f172a;color:#e2e8f0;font-size:16px;appearance:none}
 input:focus,select:focus{outline:none;border-color:#38bdf8}
 input.bad,select.bad{border-color:#f87171}
 .row{display:flex;gap:10px;align-items:flex-start}
-.row>div{flex:1 1 0;min-width:0}
-.row>div{flex:1}
+.row>div{flex:1 1 0;min-width:0;display:flex;flex-direction:column}
+.row>div label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row select{padding:0 12px;line-height:46px}
 button{width:100%;background:#38bdf8;color:#06283b;border:none;font-weight:700;
 border-radius:12px;padding:14px;font-size:16px;margin-top:18px;cursor:pointer;transition:opacity .15s}
 button:disabled{opacity:.55;cursor:not-allowed}
@@ -188,7 +189,7 @@ border:1px solid #334155;border-radius:10px;max-height:280px;overflow:auto;box-s
     <div class="field-err" id="fe-fecha_salida"></div>
 
     <!-- Revisar temporada -->
-    <button class="btn-alt" onclick="precheck()">📅 Revisar temporada</button>
+    <button class="btn-alt" onclick="precheck('destino','fecha_salida','aviso-temp')">📅 Revisar temporada</button>
     <div id="aviso-temp" class="aviso hide"></div>
 
     <!-- Botón para añadir tramo de vuelta -->
@@ -225,6 +226,9 @@ border:1px solid #334155;border-radius:10px;max-height:280px;overflow:auto;box-s
       <label for="fecha_vuelta">Fecha de REGRESO</label>
       <input type="date" id="fecha_vuelta" oninput="autoResumen()">
       <div class="field-err" id="fe-fecha_vuelta"></div>
+
+      <button class="btn-alt" onclick="precheck('destino_vuelta','fecha_vuelta','aviso-temp-vuelta')">📅 Revisar temporada</button>
+      <div id="aviso-temp-vuelta" class="aviso hide"></div>
     </div>
 
     <label>Moneda</label>
@@ -528,13 +532,13 @@ function actualizarResumen(){
 }
 
 /* ---- Precheck temporada ---- */
-async function precheck(){
-  const destino = document.getElementById('destino').value;
-  const av = document.getElementById('aviso-temp');
+async function precheck(destId, fechaId, avisoId){
+  const destino = document.getElementById(destId).value;
+  const av = document.getElementById(avisoId);
   if(!destino){ av.className='aviso'; av.textContent='Elige un destino primero para revisar la temporada.'; av.classList.remove('hide'); return; }
   av.className='aviso'; av.innerHTML='<span class="spin"></span>Revisando temporada…'; av.classList.remove('hide');
   const body = { destino,
-    fecha_salida: document.getElementById('fecha_salida').value || null };
+    fecha_salida: document.getElementById(fechaId).value || null };
   try{
     const r = await fetch('/api/tracy/precheck', {method:'POST',
       headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});

@@ -178,6 +178,7 @@ body{{font-family:system-ui,sans-serif;background:#0f172a;color:#e2e8f0;margin:0
 header{{text-align:center;padding:24px 0 8px}}
 h1{{font-size:22px;margin:6px 0}}
 .ruta{{color:#94a3b8}}
+.nueva{{display:inline-block;background:#fff;color:#1e3a5f;font-weight:700;text-decoration:none;border-radius:10px;padding:10px 22px;margin-top:14px}}
 .consulta{{border:1px solid #cbd5e1;border-radius:14px;padding:14px 16px;margin:16px 0}}
 .ctitulo{{font-size:15px;font-weight:700;color:#e2e8f0;margin:2px 0 8px}}
 .frase{{color:#22c55e;font-weight:700;font-size:15px;margin:8px 0}}
@@ -200,6 +201,7 @@ footer a.creditos{{color:#3b82f6;text-decoration:underline}}
   <h1>Tracy Travel</h1>
   {saludo}
   <div class="ruta">Tus consultas recientes</div>
+  <a class="nueva" href="/">➕ Nueva consulta</a>
 </header>
 {bloques}
 <footer>
