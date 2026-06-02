@@ -119,6 +119,48 @@ DESTINOS = {
 AEROPUERTOS = {**ORIGENES, **DESTINOS}
 
 
+# --- Aerolíneas: código IATA → nombre legible ---
+AEROLINEAS = {
+    "CM": "Copa Airlines",
+    "LA": "LATAM",
+    "AV": "Avianca",
+    "AA": "American Airlines",
+    "UA": "United",
+    "DL": "Delta",
+    "B6": "JetBlue",
+    "NK": "Spirit",
+    "F9": "Frontier",
+    "P5": "Wingo",
+    "4C": "LATAM Colombia",
+    "AM": "Aeroméxico",
+    "IB": "Iberia",
+    "AF": "Air France",
+    "KL": "KLM",
+    "BA": "British Airways",
+    "LH": "Lufthansa",
+    "EK": "Emirates",
+    "TK": "Turkish Airlines",
+    "QR": "Qatar Airways",
+    "G3": "GOL",
+    "AD": "Azul",
+    "AR": "Aerolíneas Argentinas",
+    "H2": "SKY Airline",
+    "JA": "JetSMART",
+    "CO": "Copa",
+}
+
+
+def nombre_aerolinea(code: str | None) -> str:
+    """Nombre legible de una aerolínea a partir de su código IATA.
+
+    Si el código no está en el catálogo, devuelve el código tal cual.
+    """
+    if not code:
+        return ""
+    key = str(code).strip().upper()
+    return AEROLINEAS.get(key, str(code).strip())
+
+
 def bandera(iso: str | None) -> str:
     """Devuelve el emoji de bandera derivado de un código ISO-3166 alpha-2.
 

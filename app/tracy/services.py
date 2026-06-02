@@ -1,6 +1,7 @@
 """Lógica de valor de Tracy: construcción del payload del reporte,
 frase de recomendación (3-5 palabras) y mensaje de WhatsApp. Solo vuelos.
 """
+import re
 from datetime import datetime
 
 from app.tracy import catalogo, temporadas, config
@@ -83,36 +84,75 @@ def construir_payload(consulta, vuelos: list[dict],
     }
 
 
+def _fmt_fecha_wa(valor) -> str:
+    """Formatea una fecha ISO a 'YYYY-MM-DD HH:MM' (sin segundos ni zona).
+
+    Si el dato es solo fecha (sin hora), lo muestra tal cual.
+    """
+    if not valor:
+        return ""
+    s = str(valor).strip()
+    base = re.sub(r"(Z|[+-]\d{2}:?\d{2})$", "", s)
+    try:
+        dt = datetime.fromisoformat(base)
+    except ValueError:
+        return s
+    if "T" not in s and " " not in base:
+        return dt.strftime("%Y-%m-%d")
+    return dt.strftime("%Y-%m-%d %H:%M")
+
+
 def mensaje_whatsapp_resumen(payload: dict, numero: str, cierre: bool = False,
                              mejor_precio_visto: float | None = None) -> str:
-    """Resumen corto para WhatsApp (formato PLAN §4)."""
+    """Resumen corto para WhatsApp (formato §5)."""
     moneda = payload.get("moneda", "COP")
     o = payload.get("origen_nombre", payload.get("origen"))
     d = payload.get("destino_nombre", payload.get("destino"))
     nombre = (payload.get("nombre") or "").strip()
-    saludo = f"🕵️ Hola {nombre}, soy Tracy Travel — {o} → {d}" if nombre else f"🕵️ Tracy Travel — {o} → {d}"
-    lineas = [saludo]
+    tipo_viaje = payload.get("tipo_viaje") or "ida_regreso"
+
+    saludo = (f"Hola {nombre}, soy Tracy 🕵️ Travel ✈️" if nombre
+              else "Hola, soy Tracy 🕵️ Travel ✈️")
+    lineas = [saludo, f"{o} → {d}", ""]
 
     vuelos = payload.get("vuelos") or []
     if vuelos:
         v = vuelos[0]
-        fechas = v.get("fecha_salida") or ""
-        if v.get("fecha_regreso"):
-            fechas = f"{fechas} → {v['fecha_regreso']}"
-        lineas.append(f"Mejor vuelo: {_fmt_precio(v['precio'], moneda)} ({v.get('aerolinea','')}, {fechas})")
+        aero = v.get("aerolinea", "") or ""
+        salida = _fmt_fecha_wa(v.get("fecha_salida"))
+        regreso = _fmt_fecha_wa(v.get("fecha_regreso"))
+        escalas = v.get("escalas")
+        escalas_txt = "Directo" if escalas == 0 else (f"{escalas} escala(s)" if escalas else "")
+
+        def _con_escalas(txt: str) -> str:
+            return f"{txt} · {escalas_txt}" if escalas_txt else txt
+
+        lineas.append(f"Mejor vuelo: {_fmt_precio(v['precio'], moneda)}")
+        if tipo_viaje == "ida":
+            lineas.append(f"→ {aero}, {_con_escalas(salida)}")
+        elif tipo_viaje == "regreso":
+            ref = regreso or salida
+            lineas.append(f"→ {aero}, {_con_escalas(ref)}")
+        else:  # ida_regreso
+            lineas.append(f"→ {aero}, {salida}")
+            if regreso:
+                lineas.append(f"→ {_con_escalas(regreso)}")
+            elif escalas_txt:
+                lineas[-1] = f"→ {aero}, {_con_escalas(salida)}"
+        lineas.append("")
         lineas.append(f"👉 *{payload.get('frase','')}*")  # *…* = negrita en WhatsApp
     else:
-        lineas.append("✈️ No encontramos vuelos para estas fechas en este momento.")
+        lineas.append("No encontramos vuelos para estas fechas ahora.")
 
-    lineas.append(f"Ver detalle (48 h): {config.PUBLIC_BASE_URL}/{numero}")
+    lineas.append("")
+    lineas.append(f"Ver detalle en {config.PUBLIC_BASE_URL}/{numero}")
+    lineas.append("(Disponible 48 horas)")
 
     if cierre:
         lineas.append("")
-        if mejor_precio_visto is not None:
-            lineas.append(f"🏁 Cierre del rastreo. Mejor precio visto: {_fmt_precio(mejor_precio_visto, moneda)}.")
-        else:
-            lineas.append("🏁 Cierre del rastreo.")
-        lineas.append("Gracias por usar Tracy. Inicia otra consulta cuando quieras.")
+        lineas.append("Gracias por usar")
+        lineas.append("Tracy 🕵️ Travel ✈️")
+        lineas.append("tracy.okweb.co")
     else:
         lineas.append("Responde CANCELAR para detener.")
 

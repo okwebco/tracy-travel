@@ -7,9 +7,11 @@ import random
 from datetime import date
 
 from app.tracy.providers.base import Proveedor
+from app.tracy import catalogo
 
 
-AEROLINEAS = ["Avianca", "LATAM", "GOL", "Copa", "Wingo"]
+# Códigos IATA; el nombre legible se deriva con catalogo.nombre_aerolinea.
+AEROLINEAS = ["AV", "LA", "G3", "CM", "P5"]
 
 
 def _semilla(consulta) -> random.Random:
@@ -40,7 +42,7 @@ class MockProvider(Proveedor):
             ofertas.append({
                 "precio": round(base * factor, 2),
                 "moneda": moneda,
-                "aerolinea": rnd.choice(AEROLINEAS),
+                "aerolinea": catalogo.nombre_aerolinea(rnd.choice(AEROLINEAS)),
                 "fecha_salida": salida,
                 "fecha_regreso": regreso,
                 "escalas": rnd.choice([0, 0, 1, 2]),

@@ -6,7 +6,7 @@ adaptada al modelo Consulta de Tracy. Solo APIs oficiales, cero scraping.
 import httpx
 
 from app.tracy.providers.base import Proveedor
-from app.tracy import config
+from app.tracy import config, catalogo
 
 AVIASALES_BASE = "https://www.aviasales.com"
 API_URL = "https://api.travelpayouts.com/aviasales/v3/prices_for_dates"
@@ -68,7 +68,7 @@ class TravelpayoutsProvider(Proveedor):
             ofertas.append({
                 "precio": float(item["price"]),
                 "moneda": moneda,
-                "aerolinea": item.get("airline"),
+                "aerolinea": catalogo.nombre_aerolinea(item.get("airline")),
                 "fecha_salida": item.get("departure_at"),
                 "fecha_regreso": item.get("return_at"),
                 "escalas": item.get("transfers"),

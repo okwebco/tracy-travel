@@ -60,7 +60,7 @@ _NO_CACHE = {"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "
 
 @app.get("/health")
 async def health():
-    return {"ok": True, "modo": APP_MODE, "version": "solo-vuelos-6"}
+    return {"ok": True, "modo": APP_MODE, "version": "solo-vuelos-7"}
 
 
 def _landing_tracy() -> HTMLResponse:
