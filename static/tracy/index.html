@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <meta name="robots" content="noindex">
 <title>Tracy Travel 🕵️</title>
+<!-- intl-tel-input: selector internacional de teléfono (banderas + indicativo) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@23.8.1/build/css/intlTelInput.css">
+<script defer src="https://cdn.jsdelivr.net/npm/intl-tel-input@23.8.1/build/js/intlTelInput.min.js"></script>
 <!-- Travelpayouts: verificación del sitio + atribución de afiliado (marker 734957) -->
 <script data-cfasync="false" async src="https://tp.media/content?currency=cop&trs=535240&shmarker=734957&type=init"></script>
 <script data-cfasync="false">
@@ -73,6 +76,14 @@ padding:6px 10px;cursor:pointer;font-size:13px;background:#0f172a;white-space:no
 .resumen{background:#0b2536;border:1px solid #155e75;border-radius:10px;padding:12px;margin-top:12px;font-size:14px;line-height:1.5}
 .spin{display:inline-block;width:14px;height:14px;border:2px solid #06283b;border-top-color:transparent;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px;margin-right:6px}
 @keyframes sp{to{transform:rotate(360deg)}}
+/* intl-tel-input: ocupar todo el ancho y combinar con el tema oscuro */
+.iti{width:100%}
+.iti__dropdown-content{background:#1e293b;color:#e2e8f0;border:1px solid #334155}
+.iti__country-list{background:#1e293b;color:#e2e8f0}
+.iti__country.iti__highlight,.iti__country:hover{background:#0b2536}
+.iti__dial-code{color:#94a3b8}
+.iti--inline-dropdown .iti__dropdown-content{background:#1e293b}
+.iti__search-input{background:#0f172a;color:#e2e8f0;border-color:#334155}
 </style>
 </head>
 <body>
@@ -114,29 +125,31 @@ padding:6px 10px;cursor:pointer;font-size:13px;background:#0f172a;white-space:no
       </div>
     </div>
 
-    <label for="whatsapp">Tu WhatsApp (con código de país)</label>
-    <input id="whatsapp" inputmode="numeric" placeholder="573001112233" autocomplete="off">
+    <label for="whatsapp">Tu WhatsApp</label>
+    <input id="whatsapp" type="tel" inputmode="numeric" placeholder="300 111 2233" autocomplete="off">
     <div class="field-err" id="fe-whatsapp"></div>
 
-    <!-- Origen: país → aeropuerto (dependiente) -->
-    <label>Origen</label>
+    <!-- Origen: país → ciudad (dependiente) -->
     <div class="row">
       <div>
+        <label for="origen_pais">País de origen</label>
         <select id="origen_pais" onchange="poblarAeropuertos('origen')"></select>
       </div>
       <div>
+        <label for="origen">Ciudad de origen</label>
         <select id="origen" disabled></select>
       </div>
     </div>
     <div class="field-err" id="fe-origen"></div>
 
-    <!-- Destino: país → aeropuerto (dependiente) -->
-    <label>Destino</label>
+    <!-- Destino: país → ciudad (dependiente) -->
     <div class="row">
       <div>
+        <label for="destino_pais">País de destino</label>
         <select id="destino_pais" onchange="poblarAeropuertos('destino')"></select>
       </div>
       <div>
+        <label for="destino">Ciudad de destino</label>
         <select id="destino" disabled></select>
       </div>
     </div>
@@ -254,6 +267,37 @@ const RASTREO_DIAS = [1,3,5,8,15,30];
 let CLAVE = '';
 let MODO = '';
 let rastreoSel = [];   // días marcados
+let iti = null;        // instancia de intl-tel-input (si carga la librería)
+
+/* ---- Teléfono internacional (intl-tel-input) con degradación elegante ---- */
+function initTelefono(){
+  const input = document.getElementById('whatsapp');
+  if(!input || typeof window.intlTelInput !== 'function'){
+    // La librería no cargó: el input sigue siendo un campo de texto normal.
+    return;
+  }
+  try{
+    iti = window.intlTelInput(input, {
+      initialCountry: 'co',                 // Colombia (+57) por defecto
+      separateDialCode: true,               // muestra el indicativo junto a la bandera
+      utilsScript: 'https://cdn.jsdelivr.net/npm/intl-tel-input@23.8.1/build/js/utils.js'
+    });
+  }catch(_){ iti = null; }
+}
+// Inicializa cuando la librería (cargada con defer) esté disponible.
+if(typeof window.intlTelInput === 'function'){ initTelefono(); }
+else { window.addEventListener('load', initTelefono); }
+
+// Devuelve el número completo internacional en solo dígitos (p. ej. 57XXXXXXXXXX).
+function whatsappDigits(){
+  const input = document.getElementById('whatsapp');
+  if(iti && typeof iti.getNumber === 'function'){
+    const full = iti.getNumber() || '';     // E.164 con la librería: +57XXXXXXXXXX
+    const d = full.replace(/\D/g,'');
+    if(d) return d;
+  }
+  return (input ? input.value : '').replace(/\D/g,'');
+}
 
 /* ---- Acceso ---- */
 function toggleClave(){
@@ -306,7 +350,7 @@ function poblarAeropuertos(tipo){
   if(!pais){ sel.disabled = true; sel.innerHTML='<option value="">Elige país primero</option>'; return; }
   const aps = (grupos[pais] && grupos[pais].aeropuertos) || [];
   sel.disabled = false;
-  sel.innerHTML = '<option value="">Elige aeropuerto</option>';
+  sel.innerHTML = '<option value="">Ciudad…</option>';
   aps.forEach(a=>{ const o=document.createElement('option'); o.value=a.iata; o.textContent=a.ciudad+' ('+a.iata+')'; sel.appendChild(o); });
   if(aps.length===1){ sel.value = aps[0].iata; }
 }
@@ -400,8 +444,8 @@ function validar(){
   let ok = true;
   if(document.getElementById('nombre').value.trim().length < 2){ setErr('nombre','fe-nombre','Escribe tu nombre.'); ok=false; }
   if(document.getElementById('apellido').value.trim().length < 2){ setErr('apellido','fe-apellido','Escribe tu apellido.'); ok=false; }
-  const wa = document.getElementById('whatsapp').value.replace(/\D/g,'');
-  if(wa.length < 10){ setErr('whatsapp','fe-whatsapp','Escribe tu WhatsApp con código de país (solo dígitos).'); ok=false; }
+  const wa = whatsappDigits();
+  if(wa.length < 10){ setErr('whatsapp','fe-whatsapp','Escribe un número de WhatsApp válido.'); ok=false; }
   if(!document.getElementById('origen').value){ setErr('origen','fe-origen','Elige país y aeropuerto de origen.'); ok=false; }
   if(!document.getElementById('destino').value){ setErr('destino','fe-destino','Elige país y aeropuerto de destino.'); ok=false; }
   if(!MODO){ document.getElementById('err-form').textContent='Elige un modo de consulta.'; ok=false; }
@@ -456,7 +500,7 @@ async function crear(){
     clave: CLAVE,
     nombre: document.getElementById('nombre').value.trim(),
     apellido: document.getElementById('apellido').value.trim(),
-    whatsapp: document.getElementById('whatsapp').value,
+    whatsapp: whatsappDigits(),
     origen: document.getElementById('origen').value,
     destino: document.getElementById('destino').value,
     motivo: document.getElementById('motivo').value,
