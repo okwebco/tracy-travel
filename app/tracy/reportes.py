@@ -178,7 +178,7 @@ h3.top3{{text-align:center}}
 .aero{{font-weight:600;color:#e2e8f0;margin:6px 0 2px}}
 .btn{{display:inline-block;background:#38bdf8;color:#06283b;text-decoration:none;font-weight:700;border-radius:8px;padding:8px 14px;font-size:13px;white-space:nowrap}}
 .meta{{color:#cbd5e1;margin:4px 0 0;font-size:14px;line-height:1.5}}
-.hola{{color:#fff;font-size:18px;font-weight:700;margin:8px 0}}
+.hola{{color:#22d3ee;font-size:18px;font-weight:700;margin:8px 0}}
 .tipo{{color:#94a3b8;font-size:13px}}
 footer{{margin-top:26px;color:#64748b;font-size:12px;text-align:center;line-height:1.6}}
 footer a.creditos{{color:#3b82f6;text-decoration:underline}}
