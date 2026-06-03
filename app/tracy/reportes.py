@@ -217,10 +217,15 @@ def pagina_reporte(numero: str, db: Session) -> HTMLResponse:
     if not numero:
         return _pagina_expirado()
     # Reportes no expirados del número, más reciente primero.
-    reportes = (db.query(Reporte)
-                .filter(Reporte.numero == numero, Reporte.expires_at > datetime.utcnow())
-                .order_by(Reporte.created_at.desc())
-                .all())
+    vigentes = db.query(Reporte).filter(Reporte.expires_at > datetime.utcnow())
+    reportes = (vigentes.filter(Reporte.numero == numero)
+                .order_by(Reporte.created_at.desc()).all())
+    # Tolerancia al código de país: si el número viene sin indicativo
+    # (p. ej. 3104599111) busca el almacenado que termine en esos dígitos
+    # (573104599111). Solo con 10+ dígitos para evitar coincidencias falsas.
+    if not reportes and len(numero) >= 10:
+        reportes = (vigentes.filter(Reporte.numero.like(f"%{numero}"))
+                    .order_by(Reporte.created_at.desc()).all())
     # Una entrada por consulta (su reporte más reciente), hasta 6 bloques.
     items, vistas = [], set()
     for r in reportes:
