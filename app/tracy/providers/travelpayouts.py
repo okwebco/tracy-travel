@@ -42,10 +42,19 @@ class TravelpayoutsProvider(Proveedor):
             "limit": 10,
             "token": config.TRAVELPAYOUTS_TOKEN,
         }
+        # 1er intento: mes pedido. Si la API (solo precios cacheados) no tiene
+        # datos para ese mes, 2do intento sin filtro de fecha (cualquier fecha
+        # cacheada de la ruta). Amplía cobertura en rutas poco transitadas.
         fecha_tramo = tramo.fecha_salida
+        ofertas: list[dict] = []
         if fecha_tramo:
-            params["departure_at"] = fecha_tramo.strftime("%Y-%m")
+            ofertas = await self._consultar({**params, "departure_at": fecha_tramo.strftime("%Y-%m")}, tramo)
+        if not ofertas:
+            ofertas = await self._consultar(params, tramo)
+        return ofertas
 
+    async def _consultar(self, params: dict, tramo) -> list[dict]:
+        """Una llamada a la API; devuelve ofertas normalizadas (o vacío)."""
         try:
             async with httpx.AsyncClient(timeout=20.0, follow_redirects=True, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"}) as client:
                 r = await client.get(API_URL, params=params)
